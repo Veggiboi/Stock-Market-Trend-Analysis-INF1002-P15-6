@@ -1,6 +1,6 @@
 prices = [1,3,6,8,4,3,7.7,8,9,10,3,3,2,6,7,8,9,2,4,12.12,8,4,5,7,4,1,8,9,3,5,8,3,5]
 
-def runs(arr):
+def upward_downward_run(arr):
     longest_up_run_count = 0 # longest up streak
     longest_down_run_count = 0 # longest down streak
     up_run_count = 0 # number of up streaks, even if run is 1 day only
@@ -48,8 +48,6 @@ def runs(arr):
     print (f"bearish days: {down_count}")
     print (f"up runs: {up_run_count}")
     print (f"down runs: {down_run_count}")
-    print (temp)
 
-
-runs(prices)
+upward_downward_run(prices)
 
