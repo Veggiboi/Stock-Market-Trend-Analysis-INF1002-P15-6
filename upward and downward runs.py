@@ -51,3 +51,5 @@ def upward_downward_run(arr):
 
 upward_downward_run(prices)
 
+#test commit
+
