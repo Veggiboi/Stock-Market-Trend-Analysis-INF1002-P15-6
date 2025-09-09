@@ -1,4 +1,4 @@
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma
+from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma, upward_downward_run
 from maxprofitcalculationv1 import maxProfitWithTransactions
 
 def main():
