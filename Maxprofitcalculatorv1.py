@@ -44,3 +44,4 @@ def maxProfitWithTransactions(prices):
         transactions.append((buy, sell))
     
     return profit, transactions
+
