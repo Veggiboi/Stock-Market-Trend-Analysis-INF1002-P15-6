@@ -56,7 +56,6 @@ def main():
             print("This could be because the stock price only went down.")
         else:
             print(f"\n--- Max Profit Analysis for {ticker} over {duration} ---")
-            print(f"Total maximum possible profit: ${total_profit:.2f}\n")
             print("Optimal Transactions:")
             for buy_index, sell_index in transactions:
                 buy_date = closing_prices.index[buy_index].date()
@@ -66,6 +65,8 @@ def main():
                 transaction_profit = sell_price - buy_price
                 print(f"  Buy: {buy_date} at ${buy_price:.2f} | Sell: {sell_date} at ${sell_price:.2f} (Profit: ${transaction_profit:.2f})")
             print("-" * 65)
+            print(f"Total Transactions: {len(transactions)}")
+            print(f"Total Maximum Profit: ${total_profit:.2f}")
             
     else:
         print("Invalid choice. Please run the script again and select 1 or 2.")
