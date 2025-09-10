@@ -11,13 +11,6 @@ def maxProfitWithTransactions(prices):
     This function finds all buy and sell points where the price is at a local
     minimum followed by a local maximum. This strategy assumes an unlimited
     number of transactions.
-    
-    Args:
-        prices (pd.Series): A pandas Series of closing prices.
-
-    Returns:
-        tuple: A tuple containing the total max profit and a list of
-               (buy_index, sell_index) tuples.
     """
     n = len(prices)
     profit = 0
@@ -44,4 +37,5 @@ def maxProfitWithTransactions(prices):
         transactions.append((buy, sell))
     
     return profit, transactions
+
 
