@@ -18,7 +18,7 @@ def calculate_sma(df, period=20):
     return df
 
 def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions):
-    """Plot SMA + closing price with interactive hover for buy/sell points."""
+    """Plot SMA + closing price with MplCursor for buy/sell points."""
     plt.figure(figsize=(12, 6))
     plt.plot(df.index, df["Close"], label="Closing Price", alpha=0.8)
     plt.plot(df.index, df[f"SMA_{sma_period}"], label=f"SMA {sma_period}", color="orange")
@@ -56,7 +56,7 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions):
     plt.plot([], [], marker="v", color="red", label="Sell", linestyle="")
     plt.legend()
 
-    plt.title(f"{ticker} Stock Price & {sma_period}-Day SMA with Buy/Sell Points (Hover)")
+    plt.title(f"{ticker} Stock Price & {sma_period}-Day SMA with Buy/Sell Points")
     plt.xlabel("Date")
     plt.ylabel("Price (USD)")
     plt.tight_layout()
