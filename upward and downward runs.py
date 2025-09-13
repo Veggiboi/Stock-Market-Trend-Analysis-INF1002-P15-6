@@ -9,7 +9,17 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     df = yf.download(ticker, period=period)
     return df
 
-data = fetch_stock_data("AAPL","3y")
+def close_data(df):
+    try:
+        df = df.iloc[:,0] # # iloc instead of loc because it uses index to get items.
+        return df
+    except AttributeError:
+        return print("Attribute error in close_data")
+
+data = close_data(fetch_stock_data("AAPL","3y"))
+print (data)
+
+
 
 prices = [1,3,6,8,4,3,7.7,8,9,10,3,3,2,6,7,8,9,2,4,12.12,8,4,5,7,4,1,8,9,3,5,8,3,5]
 
@@ -24,9 +34,8 @@ def upward_downward_run(arr):
     run_direction = "" # saves the previous run direction
     i = 1
     try:
-        arr = arr.iloc # iloc instead of loc because it uses index to get items.
-        while i < len(arr[:,0]):        #iloc[:,0] means calling entire column 0. ignore the rows
-            if (arr[i,0] - arr[i-1,0]) > 0: # current up direction
+        while i < len(arr):        #iloc[:,0] means calling entire column 0. ignore the rows
+            if (arr[i] - arr[i-1]) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
                     None
@@ -40,7 +49,7 @@ def upward_downward_run(arr):
                     longest_up_run_count = temp
 
 
-            elif (arr[i,0] - arr[i-1,0]) < 0: # current down direction
+            elif (arr[i] - arr[i-1]) < 0: # current down direction
                 down_count += 1
                 if run_direction == "down":   
                     None  
@@ -65,7 +74,7 @@ def upward_downward_run(arr):
         print (f"down runs: {down_run_count}")
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:
-        return print("Invalid input.")
+        return print("Invalid input for upward_downward_run")
 
 print(upward_downward_run(data))
 # print(len(data[:,0]))

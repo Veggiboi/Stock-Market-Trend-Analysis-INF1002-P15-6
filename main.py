@@ -1,5 +1,4 @@
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run
-
+from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data
 
 def main():
     """Main function: SMA plot + Max Profit Analysis together."""
@@ -26,7 +25,7 @@ def main():
         return
     
     # --- up, down runs ---
-    upward_downward_run(df)
+    upward_downward_run(close_data(df))
 
     # --- Add SMA ---
     df = calculate_sma(df, period=sma_period)
@@ -60,4 +59,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
 

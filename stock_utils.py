@@ -7,6 +7,7 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     Fetch historical stock data using yfinance.
     """
+    
     df = yf.download(ticker, period=period)
     return df
 
@@ -97,7 +98,14 @@ def maxProfitWithTransactions(prices):
         transactions.append((buy, sell))
     
     return profit, transactions
-    
+
+def close_data(df):
+    try:
+        df = df.iloc[:,0] # # iloc instead of loc because it uses index to get items.
+        return df
+    except AttributeError:
+        return print("Error: Attribute error in close_data")
+
 def upward_downward_run(arr):
     longest_up_run_count = 0 # longest up streak
     longest_down_run_count = 0 # longest down streak
@@ -105,14 +113,12 @@ def upward_downward_run(arr):
     down_run_count = 0 # number of down streaks, even if run is 1 day only
     up_count = 0
     down_count = 0
-
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
     i = 1
     try:
-        arr = arr.iloc # iloc instead of loc because it uses index to get items.
-        while i < len(arr[:,0]):        #iloc[:,0] means calling entire column 0. ignore the rows
-            if (arr[i,0] - arr[i-1,0]) > 0: # current up direction
+        while i < len(arr):        #iloc[:,0] means calling entire column 0. ignore the rows
+            if (arr[i] - arr[i-1]) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
                     None
@@ -126,7 +132,7 @@ def upward_downward_run(arr):
                     longest_up_run_count = temp
 
 
-            elif (arr[i,0] - arr[i-1,0]) < 0: # current down direction
+            elif (arr[i] - arr[i-1]) < 0: # current down direction
                 down_count += 1
                 if run_direction == "down":   
                     None  
@@ -142,7 +148,7 @@ def upward_downward_run(arr):
                 run_direction = ""  # resets direction if there is no difference
                 
             i += 1
-            # print (run_direction)
+            #print (run_direction)
         print (f"longest up trend: {longest_up_run_count}")
         print (f"longest down trend: {longest_down_run_count}")
         print (f"bullish days: {up_count}")
@@ -151,4 +157,4 @@ def upward_downward_run(arr):
         print (f"down runs: {down_run_count}")
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:
-        return print("Invalid input.")
+        return print("Error: Invalid input/Type Error for upward_downward_run")
