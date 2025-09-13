@@ -9,7 +9,7 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     df = yf.download(ticker, period=period)
     return df
 
-
+data = fetch_stock_data("AAPL","3y").iloc
 
 prices = [1,3,6,8,4,3,7.7,8,9,10,3,3,2,6,7,8,9,2,4,12.12,8,4,5,7,4,1,8,9,3,5,8,3,5]
 
@@ -23,8 +23,8 @@ def upward_downward_run(arr):
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
     i = 1
-    while i < len(arr):
-        if (arr[i] - arr[i-1]) > 0: # current up direction
+    while i < len(arr[:,0]):
+        if (arr[i,0] - arr[i-1,0]) > 0: # current up direction
             up_count += 1
             if run_direction == "up":   # same direction
                  None
@@ -38,7 +38,7 @@ def upward_downward_run(arr):
                 longest_up_run_count = temp
 
 
-        elif (arr[i] - arr[i-1]) < 0: # current down direction
+        elif (arr[i,0] - arr[i-1,0]) < 0: # current down direction
             down_count += 1
             if run_direction == "down":   
                  None  
@@ -62,14 +62,14 @@ def upward_downward_run(arr):
     print (f"up runs: {up_run_count}")
     print (f"down runs: {down_run_count}")
 
-upward_downward_run(prices)
-data = fetch_stock_data("AAPL","3y")
-print (data)
-print(f"date: {data.index[0]}")
-print(f"dates: {data.index}")
-print(f"iloc: {data.iloc}")
-print(f"{data.index[0]} $ {data.iloc[0,0]:.2f}")
-print(f"{data.index[1]} $ {data.iloc[1,0]:.2f}")
+upward_downward_run(data)
+# print(len(data[:,0]))
+# print (data)
+# print(f"date: {data.index[0]}")
+# print(f"dates: {data.index}")
+# print(f"iloc: {data.iloc}")
+# print(f"{data.index[0]} $ {data.iloc[0,0]:.2f}")
+# print(f"{data.index[1]} $ {data.iloc[1,0]:.2f}")
 
 
 
