@@ -1,6 +1,7 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
 import mplcursors
+import pandas
 
 def fetch_stock_data(ticker="AAPL", period="3y"):
     """
@@ -104,44 +105,50 @@ def upward_downward_run(arr):
     down_run_count = 0 # number of down streaks, even if run is 1 day only
     up_count = 0
     down_count = 0
+
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
     i = 1
-    while i < len(arr):
-        if (arr[i] - arr[i-1]) > 0: # current up direction
-            up_count += 1
-            if run_direction == "up":   # same direction
-                 None
-            else:                       # direction switched down to up
-                temp = 0
-                up_run_count += 1
-                run_direction = "up"
+    try:
+        arr = arr.iloc # iloc instead of loc because it uses index to get items.
+        while i < len(arr[:,0]):        #iloc[:,0] means calling entire column 0. ignore the rows
+            if (arr[i,0] - arr[i-1,0]) > 0: # current up direction
+                up_count += 1
+                if run_direction == "up":   # same direction
+                    None
+                else:                       # direction switched down to up
+                    temp = 0
+                    up_run_count += 1
+                    run_direction = "up"
 
-            temp += 1
-            if longest_up_run_count < temp: # save temp to longest run count
-                longest_up_run_count = temp
+                temp += 1
+                if longest_up_run_count < temp: # save temp to longest run count
+                    longest_up_run_count = temp
 
 
-        elif (arr[i] - arr[i-1]) < 0: # current down direction
-            down_count += 1
-            if run_direction == "down":   
-                 None  
+            elif (arr[i,0] - arr[i-1,0]) < 0: # current down direction
+                down_count += 1
+                if run_direction == "down":   
+                    None  
+                else:
+                    temp = 0
+                    down_run_count += 1
+                    run_direction = "down"
+
+                temp += 1
+                if longest_down_run_count < temp:
+                    longest_down_run_count = temp
             else:
-                temp = 0
-                down_run_count += 1
-                run_direction = "down"
-
-            temp += 1
-            if longest_down_run_count < temp:
-                longest_down_run_count = temp
-        else:
-            run_direction = ""  # resets direction if there is no difference
-            
-        i += 1
-        #print (run_direction)
-    print (f"longest up trend: {longest_up_run_count}")
-    print (f"longest down trend: {longest_down_run_count}")
-    print (f"bullish days: {up_count}")
-    print (f"bearish days: {down_count}")
-    print (f"up runs: {up_run_count}")
-    print (f"down runs: {down_run_count}")
+                run_direction = ""  # resets direction if there is no difference
+                
+            i += 1
+            # print (run_direction)
+        print (f"longest up trend: {longest_up_run_count}")
+        print (f"longest down trend: {longest_down_run_count}")
+        print (f"bullish days: {up_count}")
+        print (f"bearish days: {down_count}")
+        print (f"up runs: {up_run_count}")
+        print (f"down runs: {down_run_count}")
+        return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
+    except TypeError:
+        return print("Invalid input.")

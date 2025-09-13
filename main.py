@@ -1,4 +1,4 @@
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions
+from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run
 
 
 def main():
@@ -24,6 +24,9 @@ def main():
     if df.empty:
         print("No data fetched. Please check the ticker or duration.")
         return
+    
+    # --- up, down runs ---
+    upward_downward_run(df)
 
     # --- Add SMA ---
     df = calculate_sma(df, period=sma_period)
@@ -57,3 +60,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
