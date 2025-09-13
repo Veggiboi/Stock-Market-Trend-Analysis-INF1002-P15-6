@@ -159,7 +159,7 @@ def upward_downward_run(arr):
             else:
                 run_direction = ""  # resets direction if there is no difference
                 
-            i += 1
+            idx += 1
 
         # print (f"longest up trend: {longest_up_run_count}")
         # print (f"longest down trend: {longest_down_run_count}")
