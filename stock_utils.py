@@ -2,11 +2,18 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import mplcursors
 import pandas
+from dataclasses import dataclass
 
 def collect_inputs():
-    # use label to find "close" instead of hard code column number
-    # collect 
-    pass
+    @dataclass(frozen=True)
+    class Inputs():
+        ticker: str
+        duration: str
+        sma_period: int
+    ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
+    duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
+    sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
+    return Inputs(ticker,duration,sma_period)
 
 def fetch_stock_data(ticker="AAPL", period="3y"):
     """
@@ -104,6 +111,7 @@ def maxProfitWithTransactions(prices):
     return profit, transactions
 
 def close_data(df):
+    # !!!!!! need to find close and use instaed of hardcode column number
     try:
         df = df.iloc[:,0] # # iloc instead of loc because it uses index to get items.
         return df
