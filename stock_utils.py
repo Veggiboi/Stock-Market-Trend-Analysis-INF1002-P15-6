@@ -1,8 +1,9 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
 import mplcursors
-import pandas
 from dataclasses import dataclass
+
+
 
 def collect_inputs():
     @dataclass(frozen=True)
@@ -15,12 +16,16 @@ def collect_inputs():
     sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
     return Inputs(ticker,duration,sma_period)
 
+
+
 def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     Fetch historical stock data using yfinance.
     """
     df = yf.download(ticker, period=period)
     return df
+
+
 
 def calculate_sma(df, period=20):
     """
@@ -30,52 +35,69 @@ def calculate_sma(df, period=20):
     df[f"SMA_{period}"] = df["Close"].rolling(window=period).mean()
     return df
 
+
+
+# Plot stock with SMA and buy/sell markers
 def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions):
-    """Plot SMA + closing price with MplCursor for buy/sell points."""
-    plt.figure(figsize=(12, 6))
-    plt.plot(df.index, df["Close"], label="Closing Price", alpha=0.8)
-    plt.plot(df.index, df[f"SMA_{sma_period}"], label=f"SMA {sma_period}", color="orange")
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-    buy_points = []
-    sell_points = []
+    # Extract closing prices as a Series
+    closing_prices = df["Close"]
+    prices = closing_prices.values
+    dates = df.index.values
 
+    # Plot price line segments: green if up, red if down
+    for i in range(1, len(prices)):
+        color = "green" if prices[i] > prices[i - 1] else "red"
+        ax.plot([dates[i - 1], dates[i]], [prices[i - 1], prices[i]], color=color, linewidth=1.5)
+
+    # Plot SMA line in orange
+    ax.plot(df.index, df[f"SMA_{sma_period}"], label=f"SMA {sma_period}", color="orange")
+
+    # Plot buy/sell markers
+    buy_points, sell_points = [], []
     for buy_idx, sell_idx in transactions:
-        buy_date = df.index[buy_idx]
-        sell_date = df.index[sell_idx]
-        buy_price = float(df["Close"].iloc[buy_idx])
-        sell_price = float(df["Close"].iloc[sell_idx])
+        buy_date, sell_date = df.index[buy_idx], df.index[sell_idx]
+        buy_price = float(closing_prices.iloc[buy_idx])
+        sell_price = float(closing_prices.iloc[sell_idx])
         profit = sell_price - buy_price
 
-        # Plot buy/sell markers
-        buy_marker, = plt.plot(buy_date, buy_price, marker="^", color="green", markersize=10, linestyle="")
-        sell_marker, = plt.plot(sell_date, sell_price, marker="v", color="red", markersize=10, linestyle="")
+        # Plot arrows for buy/sell points
+        buy_marker, = ax.plot(buy_date, buy_price, marker="^", color="green", markersize=6, linestyle="")
+        sell_marker, = ax.plot(sell_date, sell_price, marker="v", color="red", markersize=6, linestyle="")
 
-        buy_points.append((buy_marker, f"Buy on {buy_date.date()}\n${buy_price:.2f}"))
-        sell_points.append((sell_marker, f"Sell on {sell_date.date()}\n${sell_price:.2f}\nProfit: ${profit:.2f}"))
+        # Store marker and tooltip together
+        buy_points.append((buy_marker, f"Buy on {buy_date.date()} @ ${buy_price:.2f}"))
+        sell_points.append((sell_marker, f"Sell on {sell_date.date()} @ ${sell_price:.2f}\nProfit: ${profit:.2f}"))
 
-    # Make hover tooltips
+    # Enable hover tooltips only on markers
     cursor = mplcursors.cursor([p[0] for p in buy_points + sell_points], hover=True)
-
     @cursor.connect("add")
     def on_hover(sel):
-        # sel.index gives the point index
         for marker, text in buy_points + sell_points:
             if sel.artist == marker:
                 sel.annotation.set_text(text)
                 sel.annotation.get_bbox_patch().set_alpha(0.9)
 
-    # Clean legend (only once)
-    plt.plot([], [], marker="^", color="green", label="Buy", linestyle="")
-    plt.plot([], [], marker="v", color="red", label="Sell", linestyle="")
-    plt.legend()
+    # Add legend entries
+    ax.plot([], [], color="green", label="Uptrend")
+    ax.plot([], [], color="red", label="Downtrend")
+    ax.plot([], [], color="orange", label=f"SMA {sma_period}")
+    ax.plot([], [], marker="^", color="green", label="Buy", linestyle="")
+    ax.plot([], [], marker="v", color="red", label="Sell", linestyle="")
+    ax.legend()
 
-    plt.title(f"{ticker} Stock Price & {sma_period}-Day SMA with Buy/Sell Points")
-    plt.xlabel("Date")
-    plt.ylabel("Price (USD)")
-    plt.tight_layout()
+    # Labels and title
+    ax.set_title(f"{ticker} Stock Price & {sma_period}-Day SMA with Trade Highlights")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price (USD)")
+    fig.tight_layout()
     plt.show()
 
 
+
+# Find max profit and transactions
 def maxProfitWithTransactions(prices):
     """
     Find max profit and all corresponding transactions (buy, sell).
@@ -87,28 +109,25 @@ def maxProfitWithTransactions(prices):
     n = len(prices)
     profit = 0
     transactions = []
-    
     i = 0
     while i < n - 1:
         # Find local minimum (buy point)
-        # Using .iat[] for explicit single value access to avoid ambiguity
         while i < n - 1 and prices.iat[i + 1] <= prices.iat[i]:
             i += 1
         if i == n - 1:
             break
         buy = i
         i += 1
-
         # Find local maximum (sell point)
-        # Using .iat[] for explicit single value access to avoid ambiguity
         while i < n and prices.iat[i] >= prices.iat[i - 1]:
             i += 1
         sell = i - 1
-
+        # Add profit and store transaction
         profit += prices.iat[sell] - prices.iat[buy]
         transactions.append((buy, sell))
-    
     return profit, transactions
+
+
 
 def close_data(df):
     # !!!!!! need to find close and use instaed of hardcode column number
@@ -117,6 +136,8 @@ def close_data(df):
         return df
     except AttributeError:
         return "Error: Attribute error in close_data"
+
+
 
 def upward_downward_run(arr):
     longest_up_run_count = 0 # longest up streak
