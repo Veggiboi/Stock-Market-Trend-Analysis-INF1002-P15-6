@@ -7,7 +7,6 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     Fetch historical stock data using yfinance.
     """
-    
     df = yf.download(ticker, period=period)
     return df
 
@@ -111,13 +110,13 @@ def upward_downward_run(arr):
     longest_down_run_count = 0 # longest down streak
     up_run_count = 0 # number of up streaks, even if run is 1 day only
     down_run_count = 0 # number of down streaks, even if run is 1 day only
-    up_count = 0
-    down_count = 0
+    up_count = 0    # number of up days 
+    down_count = 0  # number of down days 
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
-    i = 1
+    i = 1   # index in arr
     try:
-        while i < len(arr):        #iloc[:,0] means calling entire column 0. ignore the rows
+        while i < len(arr):     
             if (arr[i] - arr[i-1]) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
@@ -148,13 +147,14 @@ def upward_downward_run(arr):
                 run_direction = ""  # resets direction if there is no difference
                 
             i += 1
-            #print (run_direction)
-        print (f"longest up trend: {longest_up_run_count}")
-        print (f"longest down trend: {longest_down_run_count}")
-        print (f"bullish days: {up_count}")
-        print (f"bearish days: {down_count}")
-        print (f"up runs: {up_run_count}")
-        print (f"down runs: {down_run_count}")
+
+        # print (f"longest up trend: {longest_up_run_count}")
+        # print (f"longest down trend: {longest_down_run_count}")
+        # print (f"bullish days: {up_count}")
+        # print (f"bearish days: {down_count}")
+        # print (f"up runs: {up_run_count}")
+        # print (f"down runs: {down_run_count}")
+        print("upward_downward_run run successfully")
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:
         return print("Error: Invalid input/Type Error for upward_downward_run")
