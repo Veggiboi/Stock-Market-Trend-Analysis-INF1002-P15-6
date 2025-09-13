@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import mplcursors
 import pandas
 
+def collect_inputs():
+    # use label to find "close" instead of hard code column number
+    # collect 
+    pass
+
 def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     Fetch historical stock data using yfinance.
@@ -103,7 +108,7 @@ def close_data(df):
         df = df.iloc[:,0] # # iloc instead of loc because it uses index to get items.
         return df
     except AttributeError:
-        return print("Error: Attribute error in close_data")
+        return "Error: Attribute error in close_data"
 
 def upward_downward_run(arr):
     longest_up_run_count = 0 # longest up streak
@@ -114,10 +119,10 @@ def upward_downward_run(arr):
     down_count = 0  # number of down days 
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
-    i = 1   # index in arr
+    idx = 1   # index in arr
     try:
-        while i < len(arr):     
-            if (arr[i] - arr[i-1]) > 0: # current up direction
+        while idx < len(arr):     
+            if (arr[idx] - arr[idx-1]) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
                     None
@@ -131,7 +136,7 @@ def upward_downward_run(arr):
                     longest_up_run_count = temp
 
 
-            elif (arr[i] - arr[i-1]) < 0: # current down direction
+            elif (arr[idx] - arr[idx-1]) < 0: # current down direction
                 down_count += 1
                 if run_direction == "down":   
                     None  
@@ -157,4 +162,4 @@ def upward_downward_run(arr):
         print("upward_downward_run run successfully")
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:
-        return print("Error: Invalid input/Type Error for upward_downward_run")
+        return "Error: Invalid input/Type Error for upward_downward_run"

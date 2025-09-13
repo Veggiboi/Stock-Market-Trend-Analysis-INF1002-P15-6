@@ -1,26 +1,26 @@
 Issue 1 
-Main.py - I was thinking our main.py is too long. It should be for logic flow, no if/else (unless for functions) no print. just calling functions.
+Main.py - I was thinking our main.py is too long. It should be for logic flow, no if/else (unless for functions). just calling functions.
 Main.py - Reserved for high level logic only, basically system design logic
-
-main.py should only parse inputs, call utilities, and format outputs.
-Move all validation logic (duration list, SMA integer check) into a utility: validate_inputs.
-Ensure no prints in utils except explicitly interactive helpers; return values and let main.py decide how to display.
-
-Pls move checks and input calling into fetch_stock_prices. e.g df.empty and ticker/duration logic
-Pls move "if not transactions:" printing logic into maxProfitWithTransactions
+Pls move checks fetch_stock_prices. e.g df.empty and ticker/duration logic
 Pls move sma_period if else into SMA function
+
+collect_inputs → Validate → fetch_stock_data → close_data → upward_downward_run → calculate_sma → maxProfitWithTransactions → display all/plot
 
 Issue 2 Programming: Modular design, reusable functions , 
 Duplication - Duplicated code/logic for the same purpose. e.g df["Close"], use iloc instead (use close_data function)
-Access .iat/.iloc consistently, make a new function if called by more than 1 function
+Do not hard code [:,0] for close price, as close price can change. Find close price column.
+Create a close_data that produces close_data in a series
+Create a input function for collecting inputs.
 
 Issue 3 Programming: Code readability and comments
 General - Use of better variable name with comments beside declaration of variable. 
-There is no such thing as too many comments... spam them
+(clear variable names and helpful comments throughout)
+e.g change n in maxProfitWithTransactions
+n → num_prices, i → idx/scan_idx
 
 Issue 4 well- tested logic
-Catch weird inputs
-Catching Errors for every function, prints "function name" run successfully and "Error: ___Error for "function name"
+Cover edge cases - for all functions
+Catching Errors for every function, return function name" run successfully and "Error: ___Error for "function name"
 Read up Try, Except to catch errors
 e.g failure to plot, API failure.
 
