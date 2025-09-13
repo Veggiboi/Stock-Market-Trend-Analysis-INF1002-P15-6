@@ -1,3 +1,16 @@
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def fetch_stock_data(ticker="AAPL", period="3y"):
+    """
+    Fetch historical stock data using yfinance.
+    """
+    df = yf.download(ticker, period=period)
+    return df
+
+
+
 prices = [1,3,6,8,4,3,7.7,8,9,10,3,3,2,6,7,8,9,2,4,12.12,8,4,5,7,4,1,8,9,3,5,8,3,5]
 
 def upward_downward_run(arr):
@@ -50,6 +63,15 @@ def upward_downward_run(arr):
     print (f"down runs: {down_run_count}")
 
 upward_downward_run(prices)
+data = fetch_stock_data("AAPL","3y")
+print (data)
+print(f"date: {data.index[0]}")
+print(f"dates: {data.index}")
+print(f"iloc: {data.iloc}")
+print(f"{data.index[0]} $ {data.iloc[0,0]:.2f}")
+print(f"{data.index[1]} $ {data.iloc[1,0]:.2f}")
+
+
 
 
 
