@@ -1,27 +1,22 @@
+collect_inputs → Validate → fetch_stock_data → close_data → upward_downward_run → calculate_sma → maxProfitWithTransactions → display all/plot
+
 Issue 1 
 Main.py - I was thinking our main.py is too long. It should be for logic flow, no if/else (unless for functions). just calling functions.
 Main.py - Reserved for high level logic only, basically system design logic
-Pls move checks fetch_stock_prices. e.g df.empty and ticker/duration logic
-Pls move sma_period if else into SMA function
 
-collect_inputs → Validate → fetch_stock_data → close_data → upward_downward_run → calculate_sma → maxProfitWithTransactions → display all/plot
-
-Issue 2 Programming: Modular design, reusable functions , 
-Duplication - Duplicated code/logic for the same purpose. e.g df["Close"], use iloc instead (use close_data function)
-Do not hard code [:,0] for close price, as close price can change. Find close price column.
-Create a close_data that produces close_data in a series
-Create a input function for collecting inputs.
-
-Issue 3 Programming: Code readability and comments
+Issue 2 Programming: Code readability and comments
 General - Use of better variable name with comments beside declaration of variable. 
 (clear variable names and helpful comments throughout)
 e.g change n in maxProfitWithTransactions
 n → num_prices, i → idx/scan_idx
 
-Issue 4 well- tested logic
+Issue 3 well- tested logic
 Cover edge cases - for all functions
 Catching Errors for every function, return function name" run successfully and "Error: ___Error for "function name"
 Read up Try, Except to catch errors
 e.g failure to plot, API failure.
 
+
+SMA - duration, 1mo, SMA 200. Not shown on graph
+collect_inputs - catch empty inputs
 

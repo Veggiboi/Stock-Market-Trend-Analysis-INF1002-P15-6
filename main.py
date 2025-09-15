@@ -1,36 +1,23 @@
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data
+from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data, collect_inputs
 
 def main():
+    
     print("Welcome to Stock Analyzer!")
 
-    # User Inputs from terminal
-    ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
-    duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
-    if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
-        print("Invalid duration! Defaulting to 3y.")
-        duration = "3y"
-
-    sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
-    if sma_period.isdigit():
-        sma_period = int(sma_period)
-    else:
-        print("Invalid SMA period! Defaulting to 20.")
-        sma_period = 20
+    # Input/Validate Input
+    Inputs = collect_inputs()
 
     # Fetch Stock Data
-    df = fetch_stock_data(ticker=ticker, period=duration)
-    if df.empty:
-        print("No data fetched. Please check the ticker or duration.")
-        return
-    
+    df = fetch_stock_data(ticker = Inputs.ticker, period = Inputs.duration)
+    closing_prices = close_data(df)
+
     # Analyze upward/downward trends 
-    upward_downward_run(close_data(df))
+    upward_downward_run(closing_prices)
 
     # Adding SMA 
-    df = calculate_sma(df, period=sma_period)
+    df = calculate_sma(df, period = Inputs.sma_period)
 
     # Max Profit Analysis 
-    closing_prices = df["Close"].squeeze()
     total_profit, transactions = maxProfitWithTransactions(closing_prices)
 
         # Print prompt if no profit is found
@@ -39,7 +26,7 @@ def main():
         print("This could be because the stock price only went down.")
     else:
         # Print table for buy/sell trades and profits
-        print(f"\n--- Max Profit Analysis for {ticker} stock over {duration} ---")
+        print(f"\n--- Max Profit Analysis for {Inputs.ticker} stock over {Inputs.duration} ---")
         print(f"{'Buy Date':<12} {'Buy Price':<12} {'Sell Date':<12} {'Sell Price':<12} {'Profit':<12}")
         print("-" * 65)
         for buy_index, sell_index in transactions:
@@ -54,7 +41,7 @@ def main():
         print(f"Total Maximum Profit: ${total_profit:.2f}")
 
     # Plot chart with SMA, buy/sell markers, and colored lines
-    plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions)
+    plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions)
 
 
 if __name__ == "__main__":

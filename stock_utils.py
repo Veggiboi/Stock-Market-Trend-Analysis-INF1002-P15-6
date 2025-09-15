@@ -11,10 +11,25 @@ def collect_inputs():
         ticker: str
         duration: str
         sma_period: int
+
     ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
+    if yf.Lookup(ticker, timeout = 10).stock.empty:
+        ticker = "AAPL" 
+        print("Invalid ticker selection, default to AAPL")
+    
     duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
+    if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
+        print("Invalid duration! Defaulting to 3y.")
+        duration = "3y"
+
     sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
-    return Inputs(ticker,duration,sma_period)
+    if sma_period.isdigit():
+        sma_period = int(sma_period)
+    else:
+        print("Invalid SMA period! Defaulting to 20.")
+        sma_period = 20
+
+    return Inputs(ticker, duration, sma_period)
 
 
 
@@ -23,6 +38,10 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     Fetch historical stock data using yfinance.
     """
     df = yf.download(ticker, period=period)
+    if df.empty:
+        print("No data fetched. Please check the ticker. Default to AAPL")
+        df = yf.download(ticker, period=period)
+        return
     return df
 
 
@@ -130,9 +149,8 @@ def maxProfitWithTransactions(prices):
 
 
 def close_data(df):
-    # !!!!!! need to find close and use instaed of hardcode column number
     try:
-        df = df.iloc[:,0] # # iloc instead of loc because it uses index to get items.
+        df = df["Close"].squeeze()
         return df
     except AttributeError:
         return "Error: Attribute error in close_data"
