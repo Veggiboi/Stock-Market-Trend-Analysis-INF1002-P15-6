@@ -57,12 +57,11 @@ def calculate_sma(df, period=20):
 
 
 # Plot stock with SMA and buy/sell markers
-def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions):
+def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices):
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))
 
     # Extract closing prices as a Series
-    closing_prices = df["Close"]
     prices = closing_prices.values
     dates = df.index.values
 

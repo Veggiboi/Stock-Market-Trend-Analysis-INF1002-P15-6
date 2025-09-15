@@ -19,4 +19,6 @@ e.g failure to plot, API failure.
 
 SMA - duration, 1mo, SMA 200. Not shown on graph
 collect_inputs - catch empty inputs
-
+yf.Lookup - inputs like "d", "das" give results even though there isn't any ticker.
+Move print table into function, is it necessary to print?
+2 smas in legend

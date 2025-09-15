@@ -41,7 +41,7 @@ def main():
         print(f"Total Maximum Profit: ${total_profit:.2f}")
 
     # Plot chart with SMA, buy/sell markers, and colored lines
-    plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions)
+    plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions, closing_prices)
 
 
 if __name__ == "__main__":
