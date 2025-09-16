@@ -2,6 +2,8 @@ import yfinance as yf
 import pandas as pd
 from stock_utils import fetch_stock_data
 
+
+
 # --- Inputs ---
 ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
 duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
@@ -16,7 +18,8 @@ if df.empty:
     exit()
 
 
-def compute_daily_return(df):
+
+def daily_return(df):
     '''
     Getting stock price data using yfinance api and compute the daily returns manually using formula
     
@@ -26,7 +29,7 @@ def compute_daily_return(df):
         r_t = (P_t - P_{t-1}) / P_{t-1}
     '''
     
-    #computing daily returns across a certain month or year 
+    #if data not found
     if df.empty:
         print("No data found from given range or ticker ")
         return None
@@ -38,6 +41,6 @@ def compute_daily_return(df):
     daily_returns = (close_prices - close_prices.shift(1)) / close_prices.shift(1)
     return daily_returns
 
-daily_returns = compute_daily_return(df)
+daily_returns = daily_return(df)
 if daily_returns is not None:
     print(daily_returns)

@@ -157,8 +157,21 @@ def close_data(df):
 
 
 # add daily returns input 2 float. 
+'''
+formula used:
+r_t = (P_t - P_{t-1}) / P_{t-1}
+'''
+#Extracting only closing prices from API data.
+def daily_return(close_prices):
+    
+    daily_returns = (close_prices - close_prices.shift(1)) / close_prices.shift(1)
+    if daily_returns is not None:
+        return daily_returns.round(3)
+    else:
+        print("No daily return data available")
+    
 # handle errors
-# return as percentage float .2f
+# return as float .3f
 
 
 
