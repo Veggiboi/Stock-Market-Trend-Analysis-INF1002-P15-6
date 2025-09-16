@@ -1,12 +1,22 @@
 import yfinance as yf
 import pandas as pd
+from stock_utils import fetch_stock_data
 
-ticker = input("Enter stock ticker : ").upper()
-start_date = input("Enter start date YYYY-MM-DD : ")
-end_date = input("Enter end date YYYY-MM-DD : ")
+# --- Inputs ---
+ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
+duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
+if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
+    print("Invalid duration! Defaulting to 3y.")
+    duration = "3y"
 
-def compute_daily_returns(ticker, start_date, end_date):
-    
+# --- Fetch Data ---
+df = fetch_stock_data(ticker=ticker, period=duration)
+if df.empty:
+    print("No data fetched. Please check the ticker or duration.")
+    exit()
+
+
+def compute_daily_return(df):
     '''
     Getting stock price data using yfinance api and compute the daily returns manually using formula
     
@@ -14,40 +24,20 @@ def compute_daily_returns(ticker, start_date, end_date):
 
     formula used:
         r_t = (P_t - P_{t-1}) / P_{t-1}
-    
     '''
     
-    '''
-    variables:
-        ticker (str): e.g 'NVDA'
-        start_data (str): e.g '2025-01-01'
-        end_data (str): e.g '2025-01-30'
-
-
-
-    '''
-
-    #Retrieving data from yfinance
-    data = yf.download(ticker=ticker, start=start_date, end=end_date)
-
-    #To see the general data retrieved from yfinance
-    print(data)  
-
-
-    #Ensure data is correct.
-    if data.empty:
+    #computing daily returns across a certain month or year 
+    if df.empty:
         print("No data found from given range or ticker ")
-        
+        return None
+    
     #Extracting only closing prices from API data.
-    close_prices = data['Close']
-
+    close_prices = df['Close']
+    
     #Computing of daily returns using formula
-    #possible changing to * 100 to get percentage
-
     daily_returns = (close_prices - close_prices.shift(1)) / close_prices.shift(1)
+    return daily_returns
 
-
-    return(daily_returns)
-
-daily_returns = compute_daily_returns(ticker, start_date, end_date)
-print(daily_returns)
+daily_returns = compute_daily_return(df)
+if daily_returns is not None:
+    print(daily_returns)
