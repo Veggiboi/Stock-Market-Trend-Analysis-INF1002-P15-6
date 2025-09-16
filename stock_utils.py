@@ -156,6 +156,12 @@ def close_data(df):
 
 
 
+# add daily returns input 2 float. 
+# handle errors
+# return as percentage float .2f
+
+
+
 def upward_downward_run(arr):
     longest_up_run_count = 0 # longest up streak
     longest_down_run_count = 0 # longest down streak
