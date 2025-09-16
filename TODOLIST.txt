@@ -16,10 +16,19 @@ Catching Errors for every function, return function name" run successfully and "
 Read up Try, Except to catch errors
 e.g failure to plot, API failure.
 
-
-SMA - duration, 1mo, SMA 200. Not shown on graph
-collect_inputs - catch empty inputs
-yf.Lookup - inputs like "d", "das" give results even though there isn't any ticker.
+TODO:
+SMA - redo, i dont think can use rolling mean. it is supposed to use it as a validation test. Then, as a validation step, you compare your result with a trusted calculation method. For example, you can compare against the result produced by pandas’ built-in .rolling().mean() function,
+SMA - if duration < SMA, tighten corner cases
+secure input: collect_inputs - catch empty inputs
+secure data fetch: yf.Lookup - inputs like "d", "das" give results even though there isn't any ticker.
 Move print table into function, is it necessary to print?
 2 smas in legend
-daily returns function in stock_utils and used in updownruns, green red highlighting.
+daily returns function in stock_utils and used in up down runs, green red highlighting.
+
+dataframe as output for easier reference if manual validation. optional convert to csv. 
+in form of date, ticker, close, daily return, direction, buy/sell, SMA  
+Summary table: longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count, Max profit, daily return average %
+
+Visual/UX - flask
+Validation test, 5 test cases
+daily return - up down FLAT case not done
