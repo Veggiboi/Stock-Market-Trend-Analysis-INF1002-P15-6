@@ -1,18 +1,17 @@
-import yfinance as yf
+from dataclasses import dataclass,replace
+@dataclass()
+class Living:
+    Animals : str
+    Fish : str
+    Human : int
 
-def fetch_stock_data(ticker="AAPL", period="3y"):
-
-    return yf.download(ticker, period=period, timeout=10, auto_adjust=True)
-    # try:
-    #     df = yf.download(ticker, period=period, timeout=10, auto_adjust=True)   # time out so it wont hang/auto adjust for stock split for consistent value
-    #     if df.empty:
-    #         print("No data fetched. Please check the ticker. Default to AAPL")
-    #         df = yf.download(ticker = 'AAPL', period=period)
-    #         return
-        
-    # except Exception as e:
-    #     print(f"Error fetching data {e}\nDefault ticker=AAPL")
-    #     fetch_stock_data(ticker="AAPL", period=period)
-
-
-fetch_stock_data("asdfghjk","3y")
+def chicken():
+    
+    Animals = "nugget"
+    Fish = "tuna"
+    Human = 20000
+    return Living(Animals,Fish,Human)
+x = chicken()
+print(x)
+x = replace(x, Human = 2)
+print(x)

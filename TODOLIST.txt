@@ -22,3 +22,4 @@ append relevant data into output dataframe for validation/CSV
 CJ:
 Flask UX
 Summary table in flask: longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count, Max profit, daily return average %
+

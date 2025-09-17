@@ -3,15 +3,13 @@ import matplotlib.pyplot as plt
 import mplcursors
 from dataclasses import dataclass
 
-
+@dataclass(frozen=True)
+class Inputs():
+    ticker: str
+    duration: str
+    sma_period: int
 
 def collect_inputs():
-    @dataclass(frozen=True)
-    class Inputs():
-        ticker: str
-        duration: str
-        sma_period: int
-
     ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
     if ticker == '':    # check for empty input
         ticker = "AAPL" 
@@ -41,6 +39,7 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     if df.empty:
         print("No data fetched. Default to AAPL")
         df = yf.download('AAPL', period=period)
+        Inputs.ticker = 'AAPL'
     return df
 
 
