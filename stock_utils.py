@@ -183,7 +183,7 @@ def upward_downward_run(arr):
     idx = 1   # index in arr
     try:
         while idx < len(arr):     
-            if (daily_return(arr[idx], arr[idx-1])) > 0: # current up direction
+            if (daily_return(arr.iloc[idx], arr.iloc[idx-1])) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
                     None
@@ -197,7 +197,7 @@ def upward_downward_run(arr):
                     longest_up_run_count = temp
 
 
-            elif (daily_return(arr[idx], arr[idx-1])) < 0: # current down direction
+            elif (daily_return(arr.iloc[idx], arr.iloc[idx-1])) < 0: # current down direction
                 down_count += 1
                 if run_direction == "down":   
                     None  
