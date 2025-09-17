@@ -156,22 +156,18 @@ def close_data(df):
 
 
 
-# add daily returns input 2 float. 
 '''
 formula used:
 r_t = (P_t - P_{t-1}) / P_{t-1}
 '''
 #Extracting only closing prices from API data.
-def daily_return(close_prices):
+def daily_return(close_price, day_before_price):
     
-    daily_returns = (close_prices - close_prices.shift(1)) / close_prices.shift(1)
-    if daily_returns is not None:
-        return daily_returns.round(3)
-    else:
-        print("No daily return data available")
-    
-# handle errors
-# return as float .3f
+    return (close_price - day_before_price) / day_before_price
+    # if daily_returns is not None:
+    #     print("No daily return data available")
+    # else:
+    #     return daily_returns.round(3)    
 
 
 
@@ -187,7 +183,7 @@ def upward_downward_run(arr):
     idx = 1   # index in arr
     try:
         while idx < len(arr):     
-            if (arr[idx] - arr[idx-1]) > 0: # current up direction
+            if (daily_return(arr[idx], arr[idx-1])) > 0: # current up direction
                 up_count += 1
                 if run_direction == "up":   # same direction
                     None
@@ -201,7 +197,7 @@ def upward_downward_run(arr):
                     longest_up_run_count = temp
 
 
-            elif (arr[idx] - arr[idx-1]) < 0: # current down direction
+            elif (daily_return(arr[idx], arr[idx-1])) < 0: # current down direction
                 down_count += 1
                 if run_direction == "down":   
                     None  
@@ -218,12 +214,6 @@ def upward_downward_run(arr):
                 
             idx += 1
 
-        # print (f"longest up trend: {longest_up_run_count}")
-        # print (f"longest down trend: {longest_down_run_count}")
-        # print (f"bullish days: {up_count}")
-        # print (f"bearish days: {down_count}")
-        # print (f"up runs: {up_run_count}")
-        # print (f"down runs: {down_run_count}")
         print("upward_downward_run run successfully")
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:

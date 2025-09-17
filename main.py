@@ -17,11 +17,6 @@ def main():
     # Adding SMA 
     df = calculate_sma(df, period = Inputs.sma_period)
 
-    # Daily Returns
-    daily_returns = daily_return(closing_prices)
-    print(daily_returns)
-
-
     # Max Profit Analysis 
     total_profit, transactions = maxProfitWithTransactions(closing_prices)
 
