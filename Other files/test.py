@@ -1,21 +1,18 @@
-import matplotlib.pyplot as plt
-import numpy as np
+import yfinance as yf
 
-fig, ax = plt.subplots()             # Create a figure containing a single Axes.
-ax.plot([1, 2, 3, 4], [1, 4, 2, 3])  # Plot some data on the Axes.
-ax.plot([10, 20, 30, 40], [1, 4, 2, 3])  # Plot some data on the Axes.
-# ax.plot(df.index, closes)
+def fetch_stock_data(ticker="AAPL", period="3y"):
 
-cell_text = [
-    ["Longest up",   2],
-    ["Longest down", "3"],
-    ["Bullish days", 4],
-    ["Bearish days", 5],
-    ["Up runs",      6],
-    ["Down runs",    7],
-]
-# bbox = [x0, y0, width, height] in axes coords; x0>1 puts it outside on the right
-tbl = ax.table(cellText=cell_text,
-               cellLoc="left", colLoc="left",
-               bbox=[1.0, -0.30, 0.1, 0.2])  # adjust position/size
-plt.show()   
+    return yf.download(ticker, period=period, timeout=10, auto_adjust=True)
+    # try:
+    #     df = yf.download(ticker, period=period, timeout=10, auto_adjust=True)   # time out so it wont hang/auto adjust for stock split for consistent value
+    #     if df.empty:
+    #         print("No data fetched. Please check the ticker. Default to AAPL")
+    #         df = yf.download(ticker = 'AAPL', period=period)
+    #         return
+        
+    # except Exception as e:
+    #     print(f"Error fetching data {e}\nDefault ticker=AAPL")
+    #     fetch_stock_data(ticker="AAPL", period=period)
+
+
+fetch_stock_data("asdfghjk","3y")

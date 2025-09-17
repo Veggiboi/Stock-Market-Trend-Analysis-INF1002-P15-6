@@ -1,34 +1,24 @@
 collect_inputs → Validate → fetch_stock_data → close_data → upward_downward_run → calculate_sma → maxProfitWithTransactions → display all/plot
 
-Issue 1 
-Main.py - I was thinking our main.py is too long. It should be for logic flow, no if/else (unless for functions). just calling functions.
-Main.py - Reserved for high level logic only, basically system design logic
+Julius:
+Accurately display ticker name in graph
+Flask UX
+2 smas in graph legend
+Make sure dataframe as output works 
+(easier reference if manual validation. Convertable to CSV for validation. In form of close prices, daily return, direction, buy/sell, SMA)
 
-Issue 2 Programming: Code readability and comments
-General - Use of better variable name with comments beside declaration of variable. 
-(clear variable names and helpful comments throughout)
-e.g change n in maxProfitWithTransactions
-n → num_prices, i → idx/scan_idx
+JL:
+Replace repeittive code with daily return
+daily returns function in stock_utils and used in up down runs, green red highlighting.
+Better variable names, i, n
+append relevant data into output dataframe for validation/CSV
 
-Issue 3 well- tested logic
-Cover edge cases - for all functions
-Catching Errors for every function, return function name" run successfully and "Error: ___Error for "function name"
-Read up Try, Except to catch errors
-e.g failure to plot, API failure.
-
-TODO:
+Sinclair:
+Redo SMA 
 SMA - redo, i dont think can use rolling mean. it is supposed to use it as a validation test. Then, as a validation step, you compare your result with a trusted calculation method. For example, you can compare against the result produced by pandas’ built-in .rolling().mean() function,
 SMA - if duration < SMA, tighten corner cases
-secure input: collect_inputs - catch empty inputs
-secure data fetch: yf.Lookup - inputs like "d", "das" give results even though there isn't any ticker.
-Move print table into function, is it necessary to print?
-2 smas in legend
-daily returns function in stock_utils and used in up down runs, green red highlighting.
+append relevant data into output dataframe for validation/CSV
 
-dataframe as output for easier reference if manual validation. optional convert to csv. 
-in form of date, ticker, close, daily return, direction, buy/sell, SMA  
-Summary table: longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count, Max profit, daily return average %
-
-Visual/UX - flask
-Validation test, 5 test cases
-daily return - up down FLAT case not done
+CJ:
+Flask UX
+Summary table in flask: longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count, Max profit, daily return average %

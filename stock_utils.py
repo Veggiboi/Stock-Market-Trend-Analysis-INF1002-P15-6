@@ -13,9 +13,9 @@ def collect_inputs():
         sma_period: int
 
     ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
-    if yf.Lookup(ticker, timeout = 10).stock.empty:
+    if ticker == '':    # check for empty input
         ticker = "AAPL" 
-        print("Invalid ticker selection, default to AAPL")
+        print("Empty input, default to AAPL")
     
     duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
     if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
@@ -39,9 +39,8 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     df = yf.download(ticker, period=period, timeout=10, auto_adjust=True)   # time out so it wont hang/auto adjust for stock split for consistent value
     if df.empty:
-        print("No data fetched. Please check the ticker. Default to AAPL")
-        df = yf.download(ticker, period=period)
-        return
+        print("No data fetched. Default to AAPL")
+        df = yf.download('AAPL', period=period)
     return df
 
 
