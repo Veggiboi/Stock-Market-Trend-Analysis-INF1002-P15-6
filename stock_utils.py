@@ -37,7 +37,7 @@ def fetch_stock_data(ticker="AAPL", period="3y"):
     """
     Fetch historical stock data using yfinance.
     """
-    df = yf.download(ticker, period=period)
+    df = yf.download(ticker, period=period, timeout=10, auto_adjust=True)   # time out so it wont hang/auto adjust for stock split for consistent value
     if df.empty:
         print("No data fetched. Please check the ticker. Default to AAPL")
         df = yf.download(ticker, period=period)
