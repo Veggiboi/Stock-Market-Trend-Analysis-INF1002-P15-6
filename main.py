@@ -1,4 +1,4 @@
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data, collect_inputs, daily_return, print_max_profit_analysis
+from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data, collect_inputs, analysis_dataframe
 from datetime import datetime
 
 def main():
@@ -21,8 +21,8 @@ def main():
     # --- Max Profit Analysis ---
     total_profit, transactions = maxProfitWithTransactions(closing_prices)
 
-   # Print results (moved to stock_utils)
-    df_analysis = print_max_profit_analysis(Inputs.ticker, Inputs.duration, closing_prices, transactions, total_profit)
+    #Create analysis dataframe
+    analysis_df = analysis_dataframe(df, closing_prices, transactions, Inputs.sma_period, total_profit)
 
     # Plot chart with SMA, buy/sell markers, and colored lines
     plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions, closing_prices, total_profit)
@@ -30,9 +30,9 @@ def main():
 
     # Save to CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
-    filename = f"{Inputs.ticker}_{Inputs.duration}_{timestamp}_max_profit_analysis.csv"
-    df_analysis.to_csv(filename, index=False)
-    print(f"\nProfit analysis saved to {filename}")
+    filename = f"{Inputs.ticker}_{Inputs.duration}_{timestamp}_analysis.csv"
+    analysis_df.to_csv(filename, index=True)
+    print(f"Analysis_dataframe saved into {filename}")
 
 
 if __name__ == "__main__":

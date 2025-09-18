@@ -212,42 +212,6 @@ def maxProfitWithTransactions(prices):
 
     return total_profit, transactions
 
-def profit_analysis_dataframe(closing_prices, transactions):
-    """Log all transactions in a Pandas DataFrame"""
-    data = []
-    for buy_index, sell_index in transactions:
-        buy_date = closing_prices.index[buy_index]
-        buy_price = closing_prices.iloc[buy_index]
-        sell_date = closing_prices.index[sell_index]
-        sell_price = closing_prices.iloc[sell_index]
-
-        profit_factor = 1
-        for day in range(buy_index + 1, sell_index + 1):
-            profit_factor *= (1 + daily_return(closing_prices.iloc[day], closing_prices.iloc[day - 1]))
-        transaction_profit = (profit_factor - 1) * buy_price
-
-        data.append({
-            "Buy Date": buy_date,
-            "Buy Price": buy_price,
-            "Sell Date": sell_date,
-            "Sell Price": sell_price,
-            "Profit": transaction_profit
-        })
-
-    df_transactions = pd.DataFrame(data)
-    return df_transactions
-
-def print_max_profit_analysis(ticker, duration, closing_prices, transactions, total_profit):
-    if not transactions:
-        print("\nNo profitable trading strategy found for the given period.")
-        return
-    df_transactions = profit_analysis_dataframe(closing_prices, transactions)
-    print(f"\n--- Max Profit Analysis for {ticker} over {duration} ---")
-    print(df_transactions.to_string(index=False))
-    print(f"\nTotal Transactions: {len(transactions)}")
-    print(f"Total Maximum Profit (via daily returns): ${total_profit:.2f}")
-    return df_transactions
-
 
 def close_data(df):
     try:
@@ -255,7 +219,6 @@ def close_data(df):
         return df
     except AttributeError:
         return "Error: Attribute error in close_data"
-
 
 
 '''
@@ -270,7 +233,6 @@ def daily_return(close_price, day_before_price):
     #     print("No daily return data available")
     # else:
     #     return daily_returns.round(3)    
-
 
 
 def upward_downward_run(arr):
@@ -320,3 +282,65 @@ def upward_downward_run(arr):
         return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
     except TypeError:
         return "Error: Invalid input/Type Error for upward_downward_run"
+
+def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profit):
+    """
+    Create analysis dataframe 
+    """
+    #Create an empty dataframe indexed by trading dates
+    panel = pd.DataFrame(index=closing_prices.index)
+
+    # Pull SMA from existing dataframe(df)
+    sma_col = f"SMA_{sma_period}"
+    try:
+        sma_series = df[sma_col]
+    except KeyError:
+        # If the SMA column isn't there, create an empty float Series (or raise)
+        sma_series = pd.Series(index=panel.index, dtype=float)  # all NaN
+
+    #Adding values into dataframe columns
+    panel["Closing_Price"] = closing_prices.astype(float)        
+    panel[f"SMA{sma_period}"] = sma_series.reindex(panel.index)
+    panel["Daily_Return"] = closing_prices.pct_change().round(3)
+    panel["Direction"] = np.where(panel["Daily_Return"].gt(0), "Up", np.where(panel["Daily_Return"].lt(0), "Down", "Flat"))
+    panel["Profit"] = np.nan  # float NaN so ffill works
+    panel["Signal"] = pd.Series(index=panel.index, dtype="object")
+
+    # If no profitable transactions is found (Fallback)
+    if not transactions:  
+        panel["Profit"] = panel["Profit"].astype(float).ffill().fillna(0.0)
+        print(panel)  
+        print("\nNo profitable transactions were found for the given period.")
+        print("Total transactions: 0")
+        print("Total realized profit: $0.00")
+        return panel
+
+    realized = 0.0
+    #Loop through each buy_index and sell index
+    for buy_idx, sell_idx in transactions:
+
+        #Converting integer positions to date labels
+        buy_date  = closing_prices.index[buy_idx]
+        sell_date = closing_prices.index[sell_idx]
+
+        buy_px  = float(closing_prices.iloc[buy_idx])
+        sell_px = float(closing_prices.iloc[sell_idx])
+
+        # Mark Buy, Sell and Hold inside signal column
+        panel.loc[buy_date,  "Signal"] = "Buy"
+        between = (panel.index > buy_date) & (panel.index < sell_date)
+        panel.loc[between & panel["Signal"].isna(), "Signal"] = "Hold"
+        panel.loc[sell_date, "Signal"] = "Sell"
+
+        # Update Profit ONLY when sell stock
+        realized += (sell_px - buy_px)
+        panel.loc[sell_date, "Profit"] = realized
+
+    # Keep profit the same between sell and 0.0 before first sell
+    panel.sort_index(inplace=True)
+    panel["Profit"] = panel["Profit"].astype(float).ffill().fillna(0.0)
+
+    print(panel)
+    print(f"\nTotal transactions: {len(transactions)}")
+    print(f"Total realized profit: ${total_profit:.2f}")
+    return panel
