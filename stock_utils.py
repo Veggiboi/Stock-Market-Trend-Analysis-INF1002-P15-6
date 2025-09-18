@@ -1,5 +1,6 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
+import numpy as np
 import mplcursors
 import pandas as pd
 from dataclasses import dataclass
