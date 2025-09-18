@@ -11,22 +11,54 @@ class Inputs():
     sma_period: int
 
 def collect_inputs():
-    ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").upper()
-    if ticker == '':    # check for empty input
-        ticker = "AAPL" 
-        print("Empty input, default to AAPL")
-    
-    duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").lower()
-    if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
-        print("Invalid duration! Defaulting to 3y.")
-        duration = "3y"
+    while True:
+        ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").strip().upper()
+        if not ticker:
+            print("Input cannot be empty. Please try again.")
+            continue
 
-    sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
-    if sma_period.isdigit():
+        #Validate if ticker is real
+        test = yf.Ticker(ticker).history(period = "1d")
+        if test.empty:
+            print(f"Ticker {ticker} is invalid. Please try again.")
+            continue
+        
+        else:
+            break
+        
+    while True:
+        duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").strip().lower()
+        if not duration:
+            print("Input cannot be empty. Please try again.")
+            continue
+
+        if duration not in ["1mo", "3mo", "6mo", "1y", "2y", "3y"]:
+            print("Invalid duration! Defaulting to 3y.")
+            duration = "3y"
+            break
+
+        else:
+            break
+    
+    trading_days = { "1mo": 21, "3mo": 63, "6mo": 126, "1y": 252, "2y": 504, "3y": 756,}
+    while True:
+        sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
+
+        if not sma_period.isdigit():
+            print("SMA period must be a number. Please try again.")
+            continue
+        
         sma_period = int(sma_period)
-    else:
-        print("Invalid SMA period! Defaulting to 20.")
-        sma_period = 20
+
+        if sma_period == 0:
+            print("SMA period cannot be zero. Please try again.")
+            continue
+        
+        if sma_period > trading_days[duration]:
+            print(f"SMA period too large for {duration}. Defaulting to 20. ")
+            sma_period = 20
+            break
+        break
 
     return Inputs(ticker, duration, sma_period)
 
@@ -50,7 +82,15 @@ def calculate_sma(df, period=20):
     Calculate Simple Moving Average (SMA).
     Adds a new column 'SMA_<period>' to the DataFrame.
     """
-    df[f"SMA_{period}"] = df["Close"].rolling(window=period).mean()
+    window = np.ones(period)/ period
+
+    for ticker in df["Close"].columns:
+        closeprices= df["Close"][ticker].tolist()
+        SMA= np.convolve(closeprices, window, mode = "valid")
+        SMA_array= np.full(len(closeprices), np.nan)
+        SMA_array[period-1:] = SMA  
+        df[(f"SMA_{period}",ticker)] = SMA_array
+
     return df
 
 
