@@ -1,6 +1,7 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
 import mplcursors
+import pandas as pd
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -55,7 +56,7 @@ def calculate_sma(df, period=20):
 
 
 # Plot stock with SMA and buy/sell markers
-def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices):
+def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices, total_profit):
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -108,6 +109,17 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
     ax.set_title(f"{ticker} Stock Price & {sma_period}-Day SMA with Trade Highlights")
     ax.set_xlabel("Date")
     ax.set_ylabel("Price (USD)")
+
+    # Add total transactions and profit as text on the plot
+    if total_profit is not None:
+        total_txns = len(transactions)
+        ax.text(0.02, 0.95, f"Total Transactions: {total_txns}\nTotal Max Profit: ${total_profit:.2f}", 
+                transform=ax.transAxes, fontsize=12, verticalalignment='top',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.3))
+
+
+
+
     fig.tight_layout()
     plt.show()
 
@@ -121,7 +133,7 @@ def maxProfitWithTransactions(prices):
     Assuming you can buy and sell multiple times, however you must sell before you buy again.
     """
     # Store total profit and all transactions
-    profit = 0
+    total_profit = 0
     transactions = []
 
     # Go through all prices one by one
@@ -130,11 +142,11 @@ def maxProfitWithTransactions(prices):
 
     while current_day < total_days - 1:
 
-        # Find the Buy point (minimun price)
+        # Find the Buy point (minimum price)
         while current_day < total_days - 1 and prices.iat[current_day + 1] <= prices.iat[current_day]:
             current_day += 1
 
-        # If we reached the end, stop — no more buying possible    
+        # If we reached the end, stop — no more buying possible
         if current_day == total_days - 1:
             break
 
@@ -145,35 +157,55 @@ def maxProfitWithTransactions(prices):
         while current_day < total_days and prices.iat[current_day] >= prices.iat[current_day - 1]:
             current_day += 1
 
-        sell = current_day - 1 # Last rising day is the best day to sell 
+        sell = current_day - 1
 
-        # Calculatte profit from this transaction
-        profit += prices.iat[sell] - prices.iat[buy]
+        # Calculate profit via daily returns
+        profit_factor = 1
+        for day in range(buy + 1, sell + 1):
+            daily_r = daily_return(prices.iat[day], prices.iat[day - 1])
+            profit_factor *= (1 + daily_r)
+        profit = (profit_factor - 1) * prices.iat[buy]  
+        total_profit += profit
 
-        # Save the transaction
         transactions.append((buy, sell))
 
-    return profit, transactions
+    return total_profit, transactions
+
+def profit_analysis_dataframe(closing_prices, transactions):
+    """Log all transactions in a Pandas DataFrame"""
+    data = []
+    for buy_index, sell_index in transactions:
+        buy_date = closing_prices.index[buy_index]
+        buy_price = closing_prices.iloc[buy_index]
+        sell_date = closing_prices.index[sell_index]
+        sell_price = closing_prices.iloc[sell_index]
+
+        profit_factor = 1
+        for day in range(buy_index + 1, sell_index + 1):
+            profit_factor *= (1 + daily_return(closing_prices.iloc[day], closing_prices.iloc[day - 1]))
+        transaction_profit = (profit_factor - 1) * buy_price
+
+        data.append({
+            "Buy Date": buy_date,
+            "Buy Price": buy_price,
+            "Sell Date": sell_date,
+            "Sell Price": sell_price,
+            "Profit": transaction_profit
+        })
+
+    df_transactions = pd.DataFrame(data)
+    return df_transactions
 
 def print_max_profit_analysis(ticker, duration, closing_prices, transactions, total_profit):
-    """Print formatted max profit analysis results."""
     if not transactions:
-        print("\nA profitable trading strategy was not found for the given period.")
-        print("This could be because the stock price only went down.")
-    else:
-        print(f"\n--- Max Profit Analysis for {ticker} over {duration} ---")
-        print(f"{'Buy Date':<12} {'Buy Price':<12} {'Sell Date':<12} {'Sell Price':<12} {'Profit':<12}")
-        print("-" * 65)
-        for buy_index, sell_index in transactions:
-            buy_date = str(closing_prices.index[buy_index].date())
-            buy_price = float(closing_prices.iloc[buy_index])
-            sell_date = str(closing_prices.index[sell_index].date())
-            sell_price = float(closing_prices.iloc[sell_index])
-            transaction_profit = sell_price - buy_price
-            print(f"{buy_date:<12} ${buy_price:<11.2f} {sell_date:<12} ${sell_price:<11.2f} ${transaction_profit:<11.2f}")
-        print("-" * 65)
-        print(f"Total Transactions: {len(transactions)}")
-        print(f"Total Maximum Profit: ${total_profit:.2f}")
+        print("\nNo profitable trading strategy found for the given period.")
+        return
+    df_transactions = profit_analysis_dataframe(closing_prices, transactions)
+    print(f"\n--- Max Profit Analysis for {ticker} over {duration} ---")
+    print(df_transactions.to_string(index=False))
+    print(f"\nTotal Transactions: {len(transactions)}")
+    print(f"Total Maximum Profit (via daily returns): ${total_profit:.2f}")
+    return df_transactions
 
 
 def close_data(df):
