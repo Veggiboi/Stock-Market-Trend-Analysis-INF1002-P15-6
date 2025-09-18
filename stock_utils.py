@@ -117,32 +117,63 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
 def maxProfitWithTransactions(prices):
     """
     Find max profit and all corresponding transactions (buy, sell).
-
-    This function finds all buy and sell points where the price is at a local
-    minimum followed by a local maximum. This strategy assumes an unlimited
-    number of transactions.
+    Calculates Max profit from multiple buy/sell transactions.
+    Assuming you can buy and sell multiple times, however you must sell before you buy again.
     """
-    n = len(prices)
+    # Store total profit and all transactions
     profit = 0
     transactions = []
-    i = 0
-    while i < n - 1:
-        # Find local minimum (buy point)
-        while i < n - 1 and prices.iat[i + 1] <= prices.iat[i]:
-            i += 1
-        if i == n - 1:
+
+    # Go through all prices one by one
+    current_day = 0
+    total_days = len(prices)
+
+    while current_day < total_days - 1:
+
+        # Find the Buy point (minimun price)
+        while current_day < total_days - 1 and prices.iat[current_day + 1] <= prices.iat[current_day]:
+            current_day += 1
+
+        # If we reached the end, stop — no more buying possible    
+        if current_day == total_days - 1:
             break
-        buy = i
-        i += 1
-        # Find local maximum (sell point)
-        while i < n and prices.iat[i] >= prices.iat[i - 1]:
-            i += 1
-        sell = i - 1
-        # Add profit and store transaction
+
+        buy = current_day # Mark the buy day
+        current_day += 1
+
+        # Find the Sell point (maximum price)
+        while current_day < total_days and prices.iat[current_day] >= prices.iat[current_day - 1]:
+            current_day += 1
+
+        sell = current_day - 1 # Last rising day is the best day to sell 
+
+        # Calculatte profit from this transaction
         profit += prices.iat[sell] - prices.iat[buy]
+
+        # Save the transaction
         transactions.append((buy, sell))
+
     return profit, transactions
 
+def print_max_profit_analysis(ticker, duration, closing_prices, transactions, total_profit):
+    """Print formatted max profit analysis results."""
+    if not transactions:
+        print("\nA profitable trading strategy was not found for the given period.")
+        print("This could be because the stock price only went down.")
+    else:
+        print(f"\n--- Max Profit Analysis for {ticker} over {duration} ---")
+        print(f"{'Buy Date':<12} {'Buy Price':<12} {'Sell Date':<12} {'Sell Price':<12} {'Profit':<12}")
+        print("-" * 65)
+        for buy_index, sell_index in transactions:
+            buy_date = str(closing_prices.index[buy_index].date())
+            buy_price = float(closing_prices.iloc[buy_index])
+            sell_date = str(closing_prices.index[sell_index].date())
+            sell_price = float(closing_prices.iloc[sell_index])
+            transaction_profit = sell_price - buy_price
+            print(f"{buy_date:<12} ${buy_price:<11.2f} {sell_date:<12} ${sell_price:<11.2f} ${transaction_profit:<11.2f}")
+        print("-" * 65)
+        print(f"Total Transactions: {len(transactions)}")
+        print(f"Total Maximum Profit: ${total_profit:.2f}")
 
 
 def close_data(df):
