@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from flask import Flask, request, flash, render_template
 
-
 @dataclass(frozen=True)
 class Inputs():
     ticker: str
@@ -26,8 +25,6 @@ class Runs():
     up_streaks: int
     down_streaks: int
     streaks_series: pd.Series
-
-
 
 def collect_inputs(ticker, duration, sma_period):
     while True:
@@ -116,8 +113,6 @@ def calculate_sma(df, period=20):
 
 # Plot stock with SMA and buy/sell markers
 def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices, total_profit):
-    # check if path exist
-    os.makedirs("static", exist_ok=True)
 
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -150,19 +145,9 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
         buy_points.append((buy_marker, f"Buy on {buy_date.date()} @ ${buy_price:.2f}"))
         sell_points.append((sell_marker, f"Sell on {sell_date.date()} @ ${sell_price:.2f}\nProfit: ${profit:.2f}"))
 
-    # Enable hover tooltips only on markers
-    cursor = mplcursors.cursor([p[0] for p in buy_points + sell_points], hover=True)
-    @cursor.connect("add")
-    def on_hover(sel):
-        for marker, text in buy_points + sell_points:
-            if sel.artist == marker:
-                sel.annotation.set_text(text)
-                sel.annotation.get_bbox_patch().set_alpha(0.9)
-
     # Add legend entries
     ax.plot([], [], color="green", label="Uptrend")
     ax.plot([], [], color="red", label="Downtrend")
-    ax.plot([], [], color="orange", label=f"SMA {sma_period}")
     ax.plot([], [], marker="^", color="green", label="Buy", linestyle="")
     ax.plot([], [], marker="v", color="red", label="Sell", linestyle="")
     ax.legend()
@@ -180,20 +165,27 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.3))
 
 
+    '''
+    Generate plot as png, save in static and return filename
+    '''
 
-
-    fig.tight_layout()
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
+    # check if static path exists
     os.makedirs("static", exist_ok=True)
+    
+    # generate png name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
     fname = f"{ticker}_SMA{sma_period}_{timestamp}.png"
-    img_path = os.path.join("static", fname)
+    
+    # generate
     fig.tight_layout()
+
+    # make png file save in static folder
+    img_path = os.path.join("static", fname)
     fig.savefig(img_path, dpi=150)
+
     plt.close(fig)
     return fname
     
-
 
 
 # Find max profit and transactions
@@ -253,10 +245,6 @@ def close_data(df):
 
 
 
-'''
-formula used:
-r_t = (P_t - P_{t-1}) / P_{t-1}
-'''
 #Extracting only closing prices from API data.
 def daily_return(close_price, day_before_price):
     
