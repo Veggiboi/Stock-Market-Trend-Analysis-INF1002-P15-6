@@ -29,10 +29,10 @@ def home():
         output_df = analysis_dataframe(df, closing_prices, transactions, Inputs.sma_period, total_profit, Runs.streaks_series)
 
         # Plot chart with SMA, buy/sell markers, and colored lines
-        img_name = plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions, closing_prices, total_profit)
+        img_name = plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions, closing_prices)
 
         # WIP: button to save as csv in static folder 
-        
+
         # # Save to CSV
         # save_as_csv(output_df, Inputs.ticker, Inputs.duration)
 

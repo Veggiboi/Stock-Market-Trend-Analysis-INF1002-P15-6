@@ -4,11 +4,9 @@ matplotlib.use('Agg')   # headless
 import os, time
 import matplotlib.pyplot as plt
 import numpy as np
-import mplcursors
 import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime
-from flask import Flask, request, flash, render_template
 
 @dataclass(frozen=True)
 class Inputs():
@@ -28,7 +26,7 @@ class Runs():
 
 def collect_inputs(ticker, duration, sma_period):
     while True:
-        # ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").strip().upper()
+        ticker = ticker.strip().upper()
         if not ticker:
             print("Input cannot be empty. Please try again.")
             continue
@@ -43,7 +41,7 @@ def collect_inputs(ticker, duration, sma_period):
             break
         
     while True:
-        # duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").strip().lower()
+        duration = duration.strip().lower()
         if not duration:
             print("Input cannot be empty. Please try again.")
             continue
@@ -58,7 +56,6 @@ def collect_inputs(ticker, duration, sma_period):
     
     trading_days = { "1mo": 21, "3mo": 63, "6mo": 126, "1y": 252, "2y": 504, "3y": 756,}
     while True:
-        # sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
 
         if not sma_period.isdigit():
             print("SMA period must be a number. Please try again.")
@@ -112,7 +109,7 @@ def calculate_sma(df, period=20):
 
 
 # Plot stock with SMA and buy/sell markers
-def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices, total_profit):
+def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices):
 
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -156,13 +153,6 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
     ax.set_title(f"{ticker} Stock Price & {sma_period}-Day SMA with Trade Highlights")
     ax.set_xlabel("Date")
     ax.set_ylabel("Price (USD)")
-
-    # Add total transactions and profit as text on the plot
-    if total_profit is not None:
-        total_txns = len(transactions)
-        ax.text(0.02, 0.95, f"Total Transactions: {total_txns}\nTotal Max Profit: ${total_profit:.2f}", 
-                transform=ax.transAxes, fontsize=12, verticalalignment='top',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.3))
 
 
     '''
