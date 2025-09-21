@@ -221,6 +221,7 @@ def close_data(df):
         return "Error: Attribute error in close_data"
 
 
+
 '''
 formula used:
 r_t = (P_t - P_{t-1}) / P_{t-1}
@@ -228,77 +229,91 @@ r_t = (P_t - P_{t-1}) / P_{t-1}
 #Extracting only closing prices from API data.
 def daily_return(close_price, day_before_price):
     
-    return (close_price - day_before_price) / day_before_price
-    # if daily_returns is not None:
-    #     print("No daily return data available")
-    # else:
-    #     return daily_returns.round(3)    
+    return (close_price - day_before_price) / day_before_price   
 
 
-def upward_downward_run(arr):
-    longest_up_run_count = 0 # longest up streak
-    longest_down_run_count = 0 # longest down streak
-    up_run_count = 0 # number of up streaks, even if run is 1 day only
-    down_run_count = 0 # number of down streaks, even if run is 1 day only
+
+def upward_downward_run(close_price):
+    longest_up_streak = 0 # longest up streak
+    longest_down_streak = 0 # longest down streak 
+
+    up_streaks = 0 # number of up streaks 
+    down_streaks = 0 # number of down streaks 
+
     up_count = 0    # number of up days 
     down_count = 0  # number of down days 
+
     temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
-    idx = 1   # index in arr
+    idx = 1   # index in series
+
     try:
-        while idx < len(arr):     
-            if (daily_return(arr.iloc[idx], arr.iloc[idx-1])) > 0: # current up direction
+        while idx < len(close_price):   
+
+            # current up direction
+            if (daily_return(close_price.iloc[idx], close_price.iloc[idx-1])) > 0: 
                 up_count += 1
-                if run_direction == "up":   # same direction
-                    None
-                else:                       # direction switched down to up
+
+                # direction switched to up
+                if run_direction != "up":                       
                     temp = 0
-                    up_run_count += 1
+                    up_streaks += 1
                     run_direction = "up"
 
                 temp += 1
-                if longest_up_run_count < temp: # save temp to longest run count
-                    longest_up_run_count = temp
 
+                # check if this streak is longest
+                if longest_up_streak < temp:                
+                    longest_up_streak = temp
 
-            elif (daily_return(arr.iloc[idx], arr.iloc[idx-1])) < 0: # current down direction
+            # current down direction
+            elif (daily_return(close_price.iloc[idx], close_price.iloc[idx-1])) < 0: 
                 down_count += 1
-                if run_direction == "down":   
-                    None  
-                else:
+
+                # direction switched to down
+                if run_direction != "down": 
                     temp = 0
-                    down_run_count += 1
+                    down_streaks += 1
                     run_direction = "down"
 
                 temp += 1
-                if longest_down_run_count < temp:
-                    longest_down_run_count = temp
+
+                # check if this streak is longest
+                if longest_down_streak < temp:
+                    longest_down_streak = temp
+
+            # flat direction if daily return = 0
             else:
-                run_direction = ""  # resets direction if there is no difference
+                run_direction = "flat"
                 
             idx += 1
 
         print("upward_downward_run run successfully")
-        return [longest_up_run_count, longest_down_run_count, up_count, down_count, up_run_count, down_run_count]
+        return [longest_up_streak, longest_down_streak, up_count, down_count, up_streaks, down_streaks]
+    
     except TypeError:
         return "Error: Invalid input/Type Error for upward_downward_run"
+
+
 
 def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profit):
     """
     Create analysis dataframe 
     """
-    #Create an empty dataframe indexed by trading dates
+    # Create an empty dataframe indexed by trading dates
     panel = pd.DataFrame(index=closing_prices.index)
 
     # Pull SMA from existing dataframe(df)
     sma_col = f"SMA_{sma_period}"
+
     try:
         sma_series = df[sma_col]
+        
     except KeyError:
         # If the SMA column isn't there, create an empty float Series (or raise)
         sma_series = pd.Series(index=panel.index, dtype=float)  # all NaN
 
-    #Adding values into dataframe columns
+    # Adding values into dataframe columns
     panel["Closing_Price"] = closing_prices.astype(float)        
     panel[f"SMA{sma_period}"] = sma_series.reindex(panel.index)
     panel["Daily_Return"] = closing_prices.pct_change().round(3)
@@ -307,7 +322,7 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
     panel["Signal"] = pd.Series(index=panel.index, dtype="object")
 
     # If no profitable transactions is found (Fallback)
-    if not transactions:  
+    if not transactions:
         panel["Profit"] = panel["Profit"].astype(float).ffill().fillna(0.0)
         print(panel)  
         print("\nNo profitable transactions were found for the given period.")
@@ -316,10 +331,10 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
         return panel
 
     realized = 0.0
-    #Loop through each buy_index and sell index
+    # Loop through each buy_index and sell index
     for buy_idx, sell_idx in transactions:
 
-        #Converting integer positions to date labels
+        # Converting integer positions to date labels
         buy_date  = closing_prices.index[buy_idx]
         sell_date = closing_prices.index[sell_idx]
 
