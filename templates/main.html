@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Market Analysis</title>
+  <style>
+    :root {
+      --bg: #0f172a;         /* slate-900 */
+      --panel: #111827;      /* gray-900 */
+      --card: #1f2937;       /* gray-800 */
+      --text: #e5e7eb;       /* gray-200 */
+      --muted: #9ca3af;      /* gray-400 */
+      --accent: #22c55e;     /* green-500 */
+      --border: #374151;     /* gray-700 */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 980px; margin: 40px auto; padding: 0 16px;
+    }
+    header { margin-bottom: 20px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 0.95rem; }
+    .panel {
+      background: var(--panel); padding: 16px; border-radius: 14px; border: 1px solid var(--border);
+    }
+    form {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      align-items: end;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.9rem; color: var(--muted); }
+    input[type="text"], select {
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; outline: none;
+    }
+    input[type="text"]::placeholder { color: #6b7280; }
+    .actions { display: flex; gap: 10px; }
+    .btn {
+      background: var(--accent); color: #052e16;
+      border: none; padding: 10px 16px; border-radius: 10px;
+      font-weight: 700; cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-top: 16px;
+    }
+    .img-wrap { text-align: center; }
+    .img-wrap img { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); }
+    .row {
+      display: grid; gap: 16px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 880px) {
+      .row { grid-template-columns: 1.4fr 1fr; }
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.95rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px; text-align: left;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    .meta { display: flex; gap: 16px; color: var(--muted); font-size: 0.92rem; }
+    .note { color: var(--muted); font-size: 0.9rem; margin-top: 8px; }
+    .success { color: #86efac; }   /* green-300 */
+    .danger { color: #fca5a5; }    /* red-300 */
+    .link { color: #93c5fd; text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Stock Market Analysis</h1>
+      <div class="sub">Enter a ticker, duration, and SMA to generate a chart and summary.</div>
+    </header>
+
+    <section class="panel">
+      <form action="/" method="POST" novalidate>
+        <!-- Ticker (auto-uppercased in UI) -->
+        <div class="field">
+          <label for="ticker">Ticker</label>
+          <input type="text" id="ticker" name="ticker" placeholder="AAPL" value="{{ ticker or '' }}" style="text-transform: uppercase;" />
+        </div>
+
+        <!-- Duration dropdown -->
+        <div class="field">
+          <label for="duration">Duration</label>
+          <select id="duration" name="duration">
+            {% set durations = ['1mo','3mo','6mo','1y','2y','3y'] %}
+            {% for d in durations %}
+              <option value="{{ d }}" {% if duration==d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- SMA dropdown -->
+        <div class="field">
+          <label for="sma">SMA Period</label>
+          <select id="sma" name="sma">
+            {% set sma_opts = [5,10,20,50,100,200] %}
+            {% for w in sma_opts %}
+              <option value="{{ w }}" {% if sma and (sma|int)==w %}selected{% endif %}>{{ w }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Run Analysis</button>
+          {% if csv_name %}
+            <a class="btn" href="{{ url_for('static', filename=csv_name) }}" download>Download CSV</a>
+          {% endif %}
+        </div>
+      </form>
+      {% if note %}
+        <div class="note">{{ note }}</div>
+      {% endif %}
+    </section>
+
+    <div class="row">
+      <!-- Chart -->
+      <section class="card img-wrap">
+        {% if img_name %}
+          <img src="{{ url_for('static', filename=img_name) }}{% if cache_bust %}?t={{ cache_bust }}{% endif %}" alt="Chart">
+        {% else %}
+          <div class="note">Submit the form to render a chart.</div>
+        {% endif %}
+      </section>
+
+      <!-- Summary table -->
+      <section class="card">
+        <h3 style="margin: 0 0 6px;">Summary</h3>
+        <div class="meta">
+          <div>Ticker: <strong>{{ ticker or '—' }}</strong></div>
+          <div>Duration: <strong>{{ duration or '—' }}</strong></div>
+          <div>SMA: <strong>{{ sma or '—' }}</strong></div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Longest Up Run</td><td>{{longest_up_streak or '—' }}</td></tr>
+            <tr><td>Longest Down Run</td><td>{{longest_down_streak or '—' }}</td></tr>
+            <tr><td>Up Day Count</td><td>{{up_count or '—' }}</td></tr>
+            <tr><td>Down Day Count</td><td>{{down_count or '—' }}</td></tr>
+            <tr><td>Up Run Count</td><td>{{up_run_count or '—' }}</td></tr>
+            <tr><td>Down Run Count</td><td>{{down_run_count or '—' }}</td></tr>
+            <tr><td>Max Profit (USD)</td><td>{{max_profit or '—' }}</td></tr>
+            <tr><td>Avg Daily Return (%)</td><td>{{daily_return_avg_pct or '—' }}%</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    {% if error %}
+      <p class="danger">{{ error }}</p>
+    {% endif %}
+  </div>
+
+  <script>
+    // Force uppercase for ticker input visually + value-wise
+    const tickerInput = document.getElementById('ticker');
+    if (tickerInput) {
+      tickerInput.addEventListener('input', () => {
+        tickerInput.value = tickerInput.value.toUpperCase();
+      });
+    }
+  </script>
+</body>
+</html>

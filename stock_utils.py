@@ -1,10 +1,15 @@
 import yfinance as yf
+import matplotlib
+matplotlib.use('Agg')   # headless
+import os, time
 import matplotlib.pyplot as plt
 import numpy as np
 import mplcursors
 import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime
+from flask import Flask, request, flash, render_template
+
 
 @dataclass(frozen=True)
 class Inputs():
@@ -24,9 +29,9 @@ class Runs():
 
 
 
-def collect_inputs():
+def collect_inputs(ticker, duration, sma_period):
     while True:
-        ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").strip().upper()
+        # ticker = input("Enter stock ticker symbol (e.g., AAPL, TSLA, MSFT): ").strip().upper()
         if not ticker:
             print("Input cannot be empty. Please try again.")
             continue
@@ -41,7 +46,7 @@ def collect_inputs():
             break
         
     while True:
-        duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").strip().lower()
+        # duration = input("Enter duration (e.g., 1mo, 3mo, 6mo, 1y, 2y, 3y): ").strip().lower()
         if not duration:
             print("Input cannot be empty. Please try again.")
             continue
@@ -56,7 +61,7 @@ def collect_inputs():
     
     trading_days = { "1mo": 21, "3mo": 63, "6mo": 126, "1y": 252, "2y": 504, "3y": 756,}
     while True:
-        sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
+        # sma_period = input("Enter SMA period (e.g., 20, 50, 200): ")
 
         if not sma_period.isdigit():
             print("SMA period must be a number. Please try again.")
@@ -111,6 +116,9 @@ def calculate_sma(df, period=20):
 
 # Plot stock with SMA and buy/sell markers
 def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing_prices, total_profit):
+    # check if path exist
+    os.makedirs("static", exist_ok=True)
+
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -175,7 +183,16 @@ def plot_stock_with_sma_and_trades(df, ticker, sma_period, transactions, closing
 
 
     fig.tight_layout()
-    plt.show()
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
+    os.makedirs("static", exist_ok=True)
+    fname = f"{ticker}_SMA{sma_period}_{timestamp}.png"
+    img_path = os.path.join("static", fname)
+    fig.tight_layout()
+    fig.savefig(img_path, dpi=150)
+    plt.close(fig)
+    return fname
+    
 
 
 
@@ -224,6 +241,7 @@ def maxProfitWithTransactions(prices):
         transactions.append((buy, sell))
 
     return total_profit, transactions
+
 
 
 def close_data(df):
@@ -374,8 +392,12 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
     print(f"Total realized profit: ${total_profit:.2f}")
     return panel
 
+
+
 def save_as_csv(df, ticker, duration):
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
     filename = f"{ticker}_{duration}_{timestamp}_analysis.csv"
     df.to_csv(filename, index = True)
     print(f"Analysis_dataframe saved into {filename}")
+
