@@ -4,12 +4,25 @@ import numpy as np
 import mplcursors
 import pandas as pd
 from dataclasses import dataclass
+from datetime import datetime
 
 @dataclass(frozen=True)
 class Inputs():
     ticker: str
     duration: str
     sma_period: int
+
+@dataclass(frozen=True)
+class Runs():
+    longest_up_streak: int
+    longest_down_streak: int
+    up_count: int
+    down_count: int
+    up_streaks: int
+    down_streaks: int
+    streaks_series: pd.Series
+
+
 
 def collect_inputs():
     while True:
@@ -234,16 +247,16 @@ def daily_return(close_price, day_before_price):
 
 
 def upward_downward_run(close_price):
-    longest_up_streak = 0 # longest up streak
-    longest_down_streak = 0 # longest down streak 
-
     up_streaks = 0 # number of up streaks 
     down_streaks = 0 # number of down streaks 
+
+    direction_streaks = 0 # +ve means up streak, -ve means down streak, 0 means flat
+
+    lst_streaks = [0] # list of streaks, +ve means up, -ve means down, start from 0 as nothing to compare with
 
     up_count = 0    # number of up days 
     down_count = 0  # number of down days 
 
-    temp = 0 # temp data to compare with longest streak
     run_direction = "" # saves the previous run direction
     idx = 1   # index in series
 
@@ -253,50 +266,49 @@ def upward_downward_run(close_price):
             # current up direction
             if (daily_return(close_price.iloc[idx], close_price.iloc[idx-1])) > 0: 
                 up_count += 1
+                direction_streaks += 1
 
                 # direction switched to up
                 if run_direction != "up":                       
-                    temp = 0
                     up_streaks += 1
+                    direction_streaks = 1
                     run_direction = "up"
 
-                temp += 1
-
-                # check if this streak is longest
-                if longest_up_streak < temp:                
-                    longest_up_streak = temp
+                lst_streaks.append(direction_streaks)
 
             # current down direction
             elif (daily_return(close_price.iloc[idx], close_price.iloc[idx-1])) < 0: 
                 down_count += 1
+                direction_streaks -= 1
 
                 # direction switched to down
                 if run_direction != "down": 
-                    temp = 0
                     down_streaks += 1
+                    direction_streaks = -1
                     run_direction = "down"
 
-                temp += 1
-
-                # check if this streak is longest
-                if longest_down_streak < temp:
-                    longest_down_streak = temp
+                lst_streaks.append(direction_streaks)
 
             # flat direction if daily return = 0
             else:
                 run_direction = "flat"
+                lst_streaks.append(0)
                 
             idx += 1
+            
+        streaks_series = pd.Series(lst_streaks, index = close_price.index, name = "streaks")
+        
+        longest_down_streak = min(lst_streaks)
+        longest_up_streak = max(lst_streaks)
 
-        print("upward_downward_run run successfully")
-        return [longest_up_streak, longest_down_streak, up_count, down_count, up_streaks, down_streaks]
+        return Runs(longest_up_streak, longest_down_streak, up_count, down_count, up_streaks, down_streaks, streaks_series)
     
     except TypeError:
         return "Error: Invalid input/Type Error for upward_downward_run"
 
 
 
-def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profit):
+def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profit, streaks_series):
     """
     Create analysis dataframe 
     """
@@ -318,6 +330,7 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
     panel[f"SMA{sma_period}"] = sma_series.reindex(panel.index)
     panel["Daily_Return"] = closing_prices.pct_change().round(3)
     panel["Direction"] = np.where(panel["Daily_Return"].gt(0), "Up", np.where(panel["Daily_Return"].lt(0), "Down", "Flat"))
+    panel["Streaks"] = streaks_series
     panel["Profit"] = np.nan  # float NaN so ffill works
     panel["Signal"] = pd.Series(index=panel.index, dtype="object")
 
@@ -331,6 +344,7 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
         return panel
 
     realized = 0.0
+
     # Loop through each buy_index and sell index
     for buy_idx, sell_idx in transactions:
 
@@ -359,3 +373,9 @@ def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profi
     print(f"\nTotal transactions: {len(transactions)}")
     print(f"Total realized profit: ${total_profit:.2f}")
     return panel
+
+def save_as_csv(df, ticker, duration):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
+    filename = f"{ticker}_{duration}_{timestamp}_analysis.csv"
+    df.to_csv(filename, index = True)
+    print(f"Analysis_dataframe saved into {filename}")

@@ -1,17 +1,14 @@
-from dataclasses import dataclass,replace
-@dataclass()
-class Living:
-    Animals : str
-    Fish : str
-    Human : int
+import pandas as pd
+import numpy as np
 
-def chicken():
-    
-    Animals = "nugget"
-    Fish = "tuna"
-    Human = 20000
-    return Living(Animals,Fish,Human)
-x = chicken()
-print(x)
-x = replace(x, Human = 2)
-print(x)
+dframe = pd.DataFrame({'A': [1, 2, 3, 0], 'Column 2': ['b', 'g', '0', 'o']})     
+df = np.full(len(dframe), np.nan)
+print(df)
+
+s = pd.Series([], name="X")
+
+lst = [1,3,5,6,8]
+s = pd.Series(lst, name = "up run")
+print(type(s))
+frames = [dframe, s]
+print(pd.concat(frames, axis=1)) 
