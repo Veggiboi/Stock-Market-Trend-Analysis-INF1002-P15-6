@@ -1,7 +1,7 @@
 import yfinance as yf
 import matplotlib
 matplotlib.use('Agg')   # headless
-import os, time
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -303,7 +303,7 @@ def upward_downward_run(close_price):
         return "Error: Invalid input/Type Error for upward_downward_run"
 
 
-
+# joins Series into a dataframe
 def analysis_dataframe(df, closing_prices, transactions, sma_period, total_profit, streaks_series):
     """
     Create analysis dataframe 

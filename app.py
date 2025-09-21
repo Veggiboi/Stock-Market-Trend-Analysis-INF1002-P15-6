@@ -6,7 +6,7 @@ app = Flask(__name__)
 def home():
     if request.method == 'POST':
 
-        # Validate Input (needs updating)
+        # Validate Input (!!! urgently needs updating !!!)
         Inputs = collect_inputs(request.form.get('ticker'), request.form.get('duration'), request.form.get('sma'))
 
         # --- Pipeline ---
@@ -20,16 +20,16 @@ def home():
         Runs = upward_downward_run(closing_prices)
 
         # Adding SMA 
-        df = calculate_sma(df, period = Inputs.sma_period)
+        df_with_sma = calculate_sma(df, period = Inputs.sma_period)
 
         # Max Profit Analysis
         total_profit, transactions = maxProfitWithTransactions(closing_prices)
 
         # Create analysis dataframe
-        output_df = analysis_dataframe(df, closing_prices, transactions, Inputs.sma_period, total_profit, Runs.streaks_series)
+        output_df = analysis_dataframe(df_with_sma, closing_prices, transactions, Inputs.sma_period, total_profit, Runs.streaks_series)
 
         # Plot chart with SMA, buy/sell markers, and colored lines
-        img_name = plot_stock_with_sma_and_trades(df, Inputs.ticker, Inputs.sma_period, transactions, closing_prices)
+        img_name = plot_stock_with_sma_and_trades(df_with_sma, Inputs.ticker, Inputs.sma_period, transactions, closing_prices)
 
         # WIP: button to save as csv in static folder 
 
