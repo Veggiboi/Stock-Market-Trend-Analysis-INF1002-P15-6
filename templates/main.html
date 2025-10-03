@@ -59,6 +59,13 @@
       display: grid; gap: 16px;
       grid-template-columns: 1fr;
     }
+    .errors {
+      list-style: none; margin: 0 0 12px; padding: 10px 12px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    }
+    .errors li { margin: 2px 0; }
+    .errors li.error   { color: #fca5a5; }   /* if you flash(..., "error") */
+    .errors li.success { color: #86efac; }   /* if you flash(..., "success") */
     @media (min-width: 880px) {
       .row { grid-template-columns: 1.4fr 1fr; }
     }
@@ -86,6 +93,16 @@
     </header>
 
     <section class="panel">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="errors">
+            {% for category, msg in messages %}
+              <li class="{{ category }}">{{ msg }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+      
       <form action="/" method="POST" novalidate>
         <!-- Ticker (auto-uppercased in UI) -->
         <div class="field">
