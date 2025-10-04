@@ -88,11 +88,51 @@ def download_all_zip():
 def home():
     if request.method == 'POST':
 
-         # Validate once; no loops
+        # Validate once; no loops
         # Allow comma-separated multiple tickers
         raw_tickers = request.form.get("ticker") or ""
-        # normalize and split
-        tickers_list = [t.strip().upper() for t in raw_tickers.split(",") if t.strip()]
+
+        # normalize, split, dedupe while preserving order, and uppercase
+        seen = set()
+        tickers_list = []
+        for part in raw_tickers.split(","):
+            t = part.strip().upper()
+            if not t:
+                continue
+            if t in seen:
+                continue
+            seen.add(t)
+            tickers_list.append(t)
+
+        # Enforce maximum number of tickers (prevent accidental DoS/long runs)
+        MAX_TICKERS = 10
+        if len(tickers_list) > MAX_TICKERS:
+            # truncate and notify user which tickers were dropped
+            dropped = tickers_list[MAX_TICKERS:]
+            tickers_list = tickers_list[:MAX_TICKERS]
+            flash(f"Too many tickers provided; only the first {MAX_TICKERS} will be processed. Dropped: {', '.join(dropped)}", "warning")
+
+        # Basic ticker format validation: allow letters, numbers, '.', '-' and length 1-10
+        import re
+        ticker_re = re.compile(r"^[A-Z0-9\.\-]{1,10}$")
+        invalid_tickers = [t for t in tickers_list if not ticker_re.match(t)]
+        if invalid_tickers:
+            for t in invalid_tickers:
+                flash(f"Invalid ticker format: {t}", "error")
+            return render_template(
+                "main.html",
+                img_name=None,
+                ticker=request.form.get("ticker"),
+                duration=request.form.get("duration"),
+                sma=request.form.get("sma"),
+                longest_up_streak=None,
+                longest_down_streak=None,
+                up_count=None,
+                down_count=None,
+                up_run_count=None,
+                down_run_count=None,
+                max_profit=None,
+            )
 
         # For validation reuse validate_inputs but one-by-one; collect errors per ticker
         duration_input = request.form.get("duration")
