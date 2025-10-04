@@ -1,10 +1,9 @@
 import yfinance as yf
-import matplotlib
-matplotlib.use('Agg')   # headless
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.io import to_html
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Tuple, Dict, List
@@ -43,6 +42,7 @@ class Runs():
     up_streaks: int
     down_streaks: int
     streaks_series: pd.Series
+
 
 def validate_inputs(ticker_raw: Optional[str], duration_raw: Optional[str], sma_raw: Optional[str]) -> Tuple[Optional[Inputs], Dict[str, str]]:
     """Validate form inputs from Flask (single pass, no loops).
@@ -90,7 +90,6 @@ def validate_inputs(ticker_raw: Optional[str], duration_raw: Optional[str], sma_
     return Inputs(ticker=ticker, duration=duration, sma_period=sma), {}
 
 
-
 def fetch_stock_data(ticker, period)-> pd.DataFrame:
     """
     Fetch historical stock data using yfinance.
@@ -110,11 +109,10 @@ def fetch_stock_data(ticker, period)-> pd.DataFrame:
     return df
 
 
-
 def calculate_sma(df: pd.DataFrame, period: int)-> pd.DataFrame:
-    """Compute a convolution-based SMA and add it to the DataFrame.
-
-    Using a method involving uniform window via np.convolve, fill exisitng dataframe with NaNs before sufficient data.
+    """
+    Compute a convolution-based SMA and add it to the DataFrame. Using a method involving 
+    uniform window via np.convolve, fill exisitng dataframe with NaNs before sufficient data.
 
     Args:
         df:     Input price DataFrame (expects df['Close']).
@@ -123,9 +121,10 @@ def calculate_sma(df: pd.DataFrame, period: int)-> pd.DataFrame:
     Returns:
         The input DataFrame with a flat SMA column named 'SMA_<period>'.
     """
-
+    # Create the convolution window
     window = np.ones(period)/ period
 
+    # Compute SMA for each ticker in df and add as new column
     for ticker in df["Close"].columns:
         closeprices= df["Close"][ticker].tolist()
         SMA= np.convolve(closeprices, window, mode = "valid")
@@ -133,83 +132,6 @@ def calculate_sma(df: pd.DataFrame, period: int)-> pd.DataFrame:
         SMA_array[period-1:] = SMA  
         df[f"SMA_{period}"] = SMA_array
     return df
-
-
-
-# Plot stock with SMA and buy/sell markers
-def plot_stock_with_sma_and_trades(df: pd.DataFrame, ticker: str, sma_period: int, transactions: List[tuple[int, int]], closing_prices: pd.Series, static_dir: Optional[str] = None) -> str:
-    """Render a colored-price plot with SMA and buy/sell markers; save to PNG.
-
-    Lines are colored green/red for up/down segments between days. Buy/Sell
-    markers are added using transaction indices. The image is saved as a
-    timestamped PNG and the filename is returned.
-
-    Args:
-        df:              DataFrame containing price and SMA columns.
-        ticker:          Ticker label for the title and filename.
-        sma_period:      SMA window length used for the SMA column.
-        transactions:    List of (buy_idx, sell_idx) pairs.
-        closing_prices:  Series of close prices (single ticker).
-        static_dir:      Directory to save the PNG; defaults to '<module>/static'.
-
-    Returns:
-        The PNG filename.
-    """
-
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(12, 6))
-
-    # Extract closing prices as a Series
-    prices = closing_prices.values
-    dates = df.index.values
-
-    # Plot price line segments: green if up, red if down
-    for i in range(1, len(prices)):
-        color = "green" if prices[i] > prices[i - 1] else "red"
-        ax.plot([dates[i - 1], dates[i]], [prices[i - 1], prices[i]], color=color, linewidth=1.5)
-
-    # Plot SMA line in orange
-    ax.plot(df.index, df[f"SMA_{sma_period}"], label=f"SMA {sma_period}", color="orange")
-
-    # Plot buy/sell markers
-    buy_points, sell_points = [], []
-    for buy_idx, sell_idx in transactions:
-        buy_date, sell_date = df.index[buy_idx], df.index[sell_idx]
-        buy_price = float(closing_prices.iloc[buy_idx])
-        sell_price = float(closing_prices.iloc[sell_idx])
-        profit = sell_price - buy_price
-
-        # Plot arrows for buy/sell points
-        buy_marker, = ax.plot(buy_date, buy_price, marker="^", color="green", markersize=6, linestyle="")
-        sell_marker, = ax.plot(sell_date, sell_price, marker="v", color="red", markersize=6, linestyle="")
-
-        # Store marker and tooltip together
-        buy_points.append((buy_marker, f"Buy on {buy_date.date()} @ ${buy_price:.2f}"))
-        sell_points.append((sell_marker, f"Sell on {sell_date.date()} @ ${sell_price:.2f}\nProfit: ${profit:.2f}"))
-
-    # Add legend entries
-    ax.plot([], [], color="green", label="Uptrend")
-    ax.plot([], [], color="red", label="Downtrend")
-    ax.plot([], [], marker="^", color="green", label="Buy", linestyle="")
-    ax.plot([], [], marker="v", color="red", label="Sell", linestyle="")
-    ax.legend()
-
-    # Labels and title
-    ax.set_title(f"{ticker} Stock Price & {sma_period}-Day SMA with Trade Highlights")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Price (USD)")
-
-    # check if static_dir exists, if not create it
-    if static_dir is None:
-        # default to a static folder next to this file as a fallback
-        static_dir = os.path.join(os.path.dirname(__file__), "static")
-    os.makedirs(static_dir, exist_ok=True)
-
-    fname = f"{ticker}_SMA{sma_period}_{datetime.now().strftime('%Y%m%d_%H%Mhr')}.png"
-    img_path = os.path.join(static_dir, fname)
-    fig.savefig(img_path, dpi=150)
-    plt.close(fig)
-    return fname  # return just the name; template uses url_for('static', filename=...)
 
 
 # Find max profit and transactions
@@ -276,6 +198,7 @@ def maxProfitWithTransactions(prices: pd.Series) -> tuple[float, List[tuple[int,
 
     return total_profit, transactions, pnl
 
+
 def signal_data (closing_prices: pd.Series, transactions: List[tuple[int, int]]) -> pd.Series:
     """Create a 'Signal' Series with values: 'Buy', 'Hold', 'Sell', 'Wait'.
 
@@ -305,6 +228,7 @@ def signal_data (closing_prices: pd.Series, transactions: List[tuple[int, int]])
         
     return signal
 
+
 def close_data(df: pd.DataFrame) -> pd.Series:
     """Extract a single-ticker close Series from the yfinance DataFrame.
 
@@ -318,7 +242,6 @@ def close_data(df: pd.DataFrame) -> pd.Series:
         return "Error: Attribute error in close_data"
 
 
-#Extracting only closing prices from API data.
 def daily_return(close_price: float, day_before_price: float) -> float:
     """Compute simple daily return from two price points.
 
@@ -342,8 +265,8 @@ def average_daily_return_pct(closing_prices: pd.Series) -> float:
     Returns:
         Average daily return as a percentage (float rounded to 2 decimals)
     """
-    daily_returns = closing_prices.pct_change()  # daily returns as fraction
-    avg_return = daily_returns.mean() * 100      # convert to %
+    daily_returns = closing_prices.pct_change() # daily returns as decimal
+    avg_return = daily_returns.mean() * 100 # convert to percentage     
     return round(avg_return, 2)
 
 
@@ -360,19 +283,17 @@ def upward_downward_run(close_price: pd.Series) -> Runs:
         A `Runs` dataclass containing run counts, longest streaks, and the
         streaks_series aligned to `close_price.index`.
     """
-    up_streaks = 0 # number of up streaks 
-    down_streaks = 0 # number of down streaks 
+    # Initialize counters and state variables
+    up_streaks = 0 
+    down_streaks = 0 
+    direction_streaks = 0 
+    lst_streaks = [0] 
+    up_count = 0    
+    down_count = 0  
+    run_direction = "" 
+    idx = 1   
 
-    direction_streaks = 0 # +ve means up streak, -ve means down streak, 0 means flat
-
-    lst_streaks = [0] # list of streaks, +ve means up, -ve means down, start from 0 as nothing to compare with
-
-    up_count = 0    # number of up days 
-    down_count = 0  # number of down days 
-
-    run_direction = "" # saves the previous run direction
-    idx = 1   # index in series
-
+    # Iterate through closing prices to compute streaks
     try:
         while idx < len(close_price):   
 
@@ -410,7 +331,6 @@ def upward_downward_run(close_price: pd.Series) -> Runs:
             idx += 1
             
         streaks_series = pd.Series(lst_streaks, index = close_price.index, name = "streaks")
-        
         longest_down_streak = min(lst_streaks)
         longest_up_streak = max(lst_streaks)
 
@@ -495,38 +415,123 @@ def analysis_dataframe(
     print(f"Total realized profit: ${realized_profit:.2f}")
     return panel
 
-
-def save_as_csv(df: pd.DataFrame, ticker: str, duration: str, data_dir: str | None = None) -> tuple[str, str]:
+def build_plotly_chart(df, ticker, sma_period, transactions, closing_prices) -> str:
     """
-    Save the analysis DataFrame to a CSV file in a project's 'data' directory.
+    Build an interactive Plotly chart for html.
 
-    The function ensures the target directory exists, writes a timestamped CSV,
-    and returns both the absolute file path and the bare filename.
+    Hover behavior:
+      - Close line: shows Date + Close only
+      - SMA line:   shows Date + Close + SMA
+      - BUY/SELL markers: shows only their own info (label, Date, Close, SMA)
+
 
     Args:
-        df:      Analysis DataFrame to persist.
-        ticker:  Stock ticker used in the analysis (e.g., 'AAPL').
-        duration:Data duration (e.g., '3y').
-        data_dir:Optional absolute directory to save into. If None, defaults to
-                 a 'data' folder located alongside this module file.
+        df:              DataFrame containing a flat 'SMA_<period>' column.
+        ticker:          Ticker symbol to show in the title.
+        sma_period:      Integer period used to compute the SMA (for labels).
+        transactions:    List of (buy_idx, sell_idx) pairs (index positions in closing_prices).
+        closing_prices:  Close price Series (DateTimeIndex), single ticker.
 
     Returns:
-        A tuple of:
-            - absolute_path: Full filesystem path to the saved CSV.
-            - filename:      The CSV filename (no directory), useful for links/logs.
-
-    Side Effects:
-        Creates the 'data' directory if it does not already exist and writes the CSV.
-
+        HTML snippet (string) with the Plotly chart.
     """
-    if data_dir is None:
-        data_dir = os.path.join(os.path.dirname(__file__), "data")
-    os.makedirs(data_dir, exist_ok=True)
+    idx   = closing_prices.index
+    close = closing_prices.astype(float)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%Mhr")
-    filename = f"{ticker}_{duration}_{timestamp}_analysis.csv"
-    absolute_path = os.path.join(data_dir, filename)
+    sma_key = f"SMA_{sma_period}"
+    sma = df[sma_key].reindex(idx).astype(float) if sma_key in df.columns else pd.Series(index=idx, dtype=float)
 
-    df.to_csv(absolute_path, index=True, encoding="utf-8")
-    print(f"Analysis DataFrame saved to: {absolute_path}")
-    return absolute_path, filename
+    fig = go.Figure()
+
+    # Close line — hover: Date + Close
+    fig.add_trace(go.Scatter(
+        x=idx, y=close.values, mode="lines", name="Close",
+        hovertemplate=(
+            "<b>Date</b>: %{x|%Y-%m-%d}<br>"
+            "<b>Close</b>: $%{y:.2f}"
+            "<extra></extra>"
+        )
+    ))
+
+    # SMA line — hover: Date + Close + SMA
+    fig.add_trace(go.Scatter(
+        x=idx, y=sma.values, mode="lines", name=f"SMA {sma_period}",
+        customdata=close.values,
+        hovertemplate=(
+            "<b>Date</b>: %{x|%Y-%m-%d}<br>"
+            "<b>Close</b>: $%{customdata:.2f}<br>"
+            "<b>SMA</b>: $%{y:.2f}"
+            "<extra></extra>"
+        )
+    ))
+
+    # Buy/Sell Markers — hover: Buy/Sell, Date, Close, SMA
+    if transactions:
+        buy_idx  = [i for i, _ in transactions]
+        sell_idx = [j for _, j in transactions]
+
+        buys_x   = idx[buy_idx]
+        buys_y   = close.iloc[buy_idx].astype(float).values
+        buys_sma = sma.iloc[buy_idx].values
+
+        sells_x   = idx[sell_idx]
+        sells_y   = close.iloc[sell_idx].astype(float).values
+        sells_sma = sma.iloc[sell_idx].values
+
+        fig.add_trace(go.Scatter(
+            x=buys_x, y=buys_y, mode="markers", name="Buy",
+            marker_symbol="triangle-up", marker_size=10, marker_line_width=1,
+            marker_color="#22c55e",
+            customdata=buys_sma,
+            hovertemplate=(
+                "<b>BUY</b><br>"
+                "<b>Date</b>: %{x|%Y-%m-%d}<br>"
+                "<b>Close</b>: $%{y:.2f}<br>"
+                "<b>SMA</b>: $%{customdata:.2f}"
+                "<extra></extra>"
+            )
+        ))
+        fig.add_trace(go.Scatter(
+            x=sells_x, y=sells_y, mode="markers", name="Sell",
+            marker_symbol="triangle-down", marker_size=10, marker_line_width=1,
+            marker_color="#ef4444",
+            customdata=sells_sma,
+            hovertemplate=(
+                "<b>SELL</b><br>"
+                "<b>Date</b>: %{x|%Y-%m-%d}<br>"
+                "<b>Close</b>: $%{y:.2f}<br>"
+                "<b>SMA</b>: $%{customdata:.2f}"
+                "<extra></extra>"
+            )
+        ))
+
+    # Styling graph and layout
+    fig.update_layout(
+        title=f"{ticker} — Close & SMA {sma_period}",
+        xaxis_title="Date", yaxis_title="Price (USD)",
+        hovermode="closest",
+        height=720,
+        margin=dict(l=20, r=20, t=50, b=20),
+        paper_bgcolor="#111827",  # panel
+        plot_bgcolor="#1f2937",   # card
+        font=dict(color="#e5e7eb", family="Inter, system-ui, -apple-system, Segoe UI, Roboto"),
+        hoverlabel=dict(
+            bgcolor="#111827",
+            bordercolor="#374151",
+            font=dict(color="#e5e7eb", family="Inter, system-ui, -apple-system, Segoe UI, Roboto", size=13),
+            namelength=-1,
+        ),
+        legend=dict(orientation="h", y=1.05, x=1, xanchor="right", yanchor="bottom"),
+        xaxis=dict(
+            type="date",
+            gridcolor="#374151", linecolor="#374151", zerolinecolor="#374151",
+            tickfont=dict(color="#e5e7eb"), title_font=dict(color="#e5e7eb"),
+            rangeslider=dict(visible=True, bgcolor="#1f2937", bordercolor="#374151")
+        ),
+        yaxis=dict(
+            gridcolor="#374151", linecolor="#374151", zerolinecolor="#374151",
+            tickfont=dict(color="#e5e7eb"), title_font=dict(color="#e5e7eb"),
+        ),
+    )
+
+    return to_html(fig, full_html=False, include_plotlyjs="cdn")

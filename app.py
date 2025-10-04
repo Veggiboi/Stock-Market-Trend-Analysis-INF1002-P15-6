@@ -1,9 +1,32 @@
-import os, time
-from stock_utils import fetch_stock_data, calculate_sma, plot_stock_with_sma_and_trades, maxProfitWithTransactions,upward_downward_run,close_data, validate_inputs, analysis_dataframe, save_as_csv, signal_data, average_daily_return_pct
-from flask import Flask, request, flash, render_template, redirect, url_for, send_from_directory
+import os, datetime, secrets
+from stock_utils import fetch_stock_data, calculate_sma, maxProfitWithTransactions,upward_downward_run,close_data, validate_inputs, analysis_dataframe, signal_data, average_daily_return_pct, build_plotly_chart
+from flask import Flask, request, abort, make_response, flash, render_template
 
+analysis_cache = {}
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-change-me')  # use env var in prod
+
+@app.get("/download/csv")
+def download_csv():
+    """On button click: write the CSV to memory and stream it to user."""
+    key = request.args.get("key", "")
+    if not key or key not in analysis_cache:
+        abort(400, description="No analysis available. Run analysis first.")
+
+    payload  = analysis_cache[key]
+    df       = payload["df"]
+    ticker   = payload["ticker"]
+    duration = payload["duration"]
+
+    # Build CSV in memory and stream it
+    csv_text = df.to_csv(index=True, encoding="utf-8")
+    return_name = f"{ticker}_{duration}_{datetime.datetime.now().strftime('%Y%m%d_%H%Mhr')}_analysis.csv"
+
+    resp = make_response(csv_text)
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+    resp.headers["Content-Disposition"] = f'attachment; filename="{return_name}"'
+    return resp
+    
 @app.route("/", methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
@@ -56,8 +79,6 @@ def home():
         # Create analysis dataframe
         output_df = analysis_dataframe(df=df_with_sma, closing_prices=closing_prices, sma_period=Inputs.sma_period, streaks_series=Runs.streaks_series, signals=signals, profit=profit_data, transactions=transactions, total_profit=total_profit)
 
-        # Plot chart with SMA, buy/sell markers, and colored lines
-        img_name = plot_stock_with_sma_and_trades(df_with_sma, Inputs.ticker, Inputs.sma_period, transactions, closing_prices, static_dir=app.static_folder)
 
         # Flash success message
         flash(f"Analysis completed for {Inputs.ticker} ({Inputs.duration}, SMA {Inputs.sma_period}).", "success")
@@ -65,15 +86,15 @@ def home():
         # Average daily return in percentage
         daily_return_avg_pct = average_daily_return_pct(closing_prices)
 
+        # Interactive chart HTML
+        plot_html = build_plotly_chart(df_with_sma, Inputs.ticker, Inputs.sma_period, transactions, closing_prices)
 
-        # Save to CSV (static folder)
-        absolute_path, csv_name = save_as_csv(output_df, Inputs.ticker, Inputs.duration, data_dir=app.static_folder)
-
+        # Save CSV to disk and get filename
+        key = secrets.token_urlsafe(16)
+        analysis_cache[key] = {"df": output_df, "ticker": Inputs.ticker,"duration": Inputs.duration}
 
         return render_template('main.html', 
-                                img_name = img_name,
-                                cache_bust=str(int(time.time())), # prevent browser caching of image
-
+                                plot_html = plot_html,
                                 ticker = Inputs.ticker, 
                                 duration = Inputs.duration, 
                                 sma = Inputs.sma_period, 
@@ -86,12 +107,12 @@ def home():
                                 down_run_count = Runs.down_streaks,
                                 max_profit = f"{total_profit:.2f}",
                                 daily_return_avg_pct = daily_return_avg_pct,
-                                csv_name=csv_name
+                                analysis_key = key,
                                 )
+    
                 
     # None when first generate the html
     return render_template('main.html', 
-                           img_name = None,
 
                            ticker = None, 
                            duration = None, 
