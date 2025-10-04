@@ -1,5 +1,4 @@
 import yfinance as yf
-import os
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -103,9 +102,9 @@ def fetch_stock_data(ticker, period)-> pd.DataFrame:
     """
     df = yf.download(ticker, period=period, timeout=10, auto_adjust=True)   # time out so it wont hang/auto adjust for stock split for consistent value
     if df.empty:
-        print("No data fetched. Default to AAPL")
+        # No data fetched for requested ticker; fall back to AAPL
         df = yf.download('AAPL', period=period)
-        Inputs.ticker = 'AAPL'
+        # note: do not modify Inputs here (side-effects avoided)
     return df
 
 
@@ -400,19 +399,17 @@ def analysis_dataframe(
         p = profit.reindex(panel.index).astype(float)
         panel["Profit"] = p.ffill().fillna(0.0)
     
-    print(panel)
-    
+    # Don't print large data structures in server logs; return assembled panel
     if len(transactions) == 0:
-        print("\nNo profitable transactions were found for the given period.")
-    
+        # no profitable transactions; caller can inspect 'transactions' or panel
+        pass
+
     # If total_profit wasn’t provided, fall back to the last Profit value
     if total_profit is None:
         realized_profit = float(panel["Profit"].iloc[-1]) if not panel["Profit"].empty else 0.0
     else:
         realized_profit = float(total_profit)
 
-    print(f"Total Transactions: {len(transactions)}")
-    print(f"Total realized profit: ${realized_profit:.2f}")
     return panel
 
 def build_plotly_chart(df, ticker, sma_period, transactions, closing_prices) -> str:
@@ -446,6 +443,7 @@ def build_plotly_chart(df, ticker, sma_period, transactions, closing_prices) -> 
     # Close line — hover: Date + Close
     fig.add_trace(go.Scatter(
         x=idx, y=close.values, mode="lines", name="Close",
+        line=dict(color="#ffffff", width=2),
         hovertemplate=(
             "<b>Date</b>: %{x|%Y-%m-%d}<br>"
             "<b>Close</b>: $%{y:.2f}"
@@ -456,6 +454,7 @@ def build_plotly_chart(df, ticker, sma_period, transactions, closing_prices) -> 
     # SMA line — hover: Date + Close + SMA
     fig.add_trace(go.Scatter(
         x=idx, y=sma.values, mode="lines", name=f"SMA {sma_period}",
+        line=dict(color="#60a5fa", width=2),
         customdata=close.values,
         hovertemplate=(
             "<b>Date</b>: %{x|%Y-%m-%d}<br>"

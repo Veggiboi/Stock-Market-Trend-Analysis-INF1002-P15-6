@@ -1,164 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stock Market Analysis</title>
-  <style>
-    :root {
-      --bg: #0f172a;         /* slate-900 */
-      --panel: #111827;      /* gray-900 */
-      --card: #1f2937;       /* gray-800 */
-      --text: #e5e7eb;       /* gray-200 */
-      --muted: #9ca3af;      /* gray-400 */
-      --accent: #22c55e;     /* green-500 */
-      --border: #374151;     /* gray-700 */
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
-      line-height: 1.45;
-    }
-    .wrap {
-      max-width: 1200px; margin: 40px auto; padding: 0 16px;
-    }
-    header { margin-bottom: 20px; }
-    h1 { font-size: 1.6rem; margin: 0 0 4px; }
-    .sub { color: var(--muted); font-size: 0.95rem; }
-    .panel {
-      background: var(--panel); padding: 16px; border-radius: 14px; border: 1px solid var(--border);
-    }
-    form {
-      display: grid; gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      align-items: end;
-    }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 0.9rem; color: var(--muted); }
-    input[type="text"], select {
-      background: var(--card); color: var(--text);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 12px; outline: none;
-    }
-    input[type="text"]::placeholder { color: #6b7280; }
-    .actions { display: flex; gap: 10px; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stock Market Analysis</title>
 
-    .btn,
-    .btn-ghost,
-    a.btn,
-    a.btn-ghost {
-      background: var(--accent);        
-      color: #052e16;                   
-      border: 1px solid var(--accent);
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 600;                 
-      text-decoration: none;            
-      cursor: pointer;
-      transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease, box-shadow .15s ease;
-    }
+<style>
+  /* ========= THEME & TOKENS ========= */
+  :root {
+    --bg: #0b1020;             /* deep night */
+    --panel: rgba(18, 24, 40, .72);
+    --card: rgba(24, 31, 52, .66);
+    --text: #e8ecf3;
+    --muted: #a6b0c3;
+    --border: rgba(255,255,255,.08);
+    --accent: #18d07a;         /* emerald neon */
+    --accent-2: #8b5cf6;       /* violet */
+    --accent-3: #22d3ee;       /* cyan */
+    --radius-lg: 20px;
+    --radius-sm: 12px;
+    --shadow-1: 0 10px 50px rgba(2,6,23,.55);
+    --shadow-2: 0 6px 20px rgba(2,6,23,.45);
+  }
 
-    /* Hover: blend with page background  */
-    .btn:hover,
-    .btn-ghost:hover,
-    a.btn:hover,
-    a.btn-ghost:hover {
-      background: var(--bg);            
-      color: var(--accent);             
-      border-color: var(--accent);      
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(0,0,0,.25);
-      text-decoration: none;
-    }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+    color: var(--text); background: var(--bg);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
 
-    /* Active (pressed) */
-    .btn:active,
-    .btn-ghost:active,
-    a.btn:active,
-    a.btn-ghost:active {
-      transform: translateY(0);
-      box-shadow: none;
-    }
+  /* ========= ART BACKGROUND (animated aurora) ========= */
+  .backdrop {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background:
+      radial-gradient(1200px 800px at 75% -10%, rgba(34,211,238,.18), transparent 50%),
+      radial-gradient(900px 700px at -10% 20%, rgba(139,92,246,.20), transparent 55%),
+      radial-gradient(700px 600px at 110% 90%, rgba(24,208,122,.18), transparent 60%),
+      radial-gradient(1200px 1000px at 50% 120%, rgba(34,211,238,.13), transparent 60%);
+    filter: saturate(120%);
+  }
+  .backdrop::before,
+  .backdrop::after {
+    content: ""; position: absolute; inset: -20%;
+    background: conic-gradient(
+      from 0deg,
+      rgba(34,211,238,.12),
+      rgba(139,92,246,.12),
+      rgba(24,208,122,.12),
+      rgba(34,211,238,.12)
+    );
+    animation: swirl 18s linear infinite;
+    mix-blend-mode: screen; pointer-events: none;
+  }
+  .backdrop::after { animation-duration: 28s; animation-direction: reverse; opacity: .6; }
+  @keyframes swirl { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .backdrop::before, .backdrop::after { animation: none; }
+  }
 
-    /* Keyboard focus */
-    .btn:focus-visible,
-    .btn-ghost:focus-visible,
-    a.btn:focus-visible,
-    a.btn-ghost:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
+  /* ========= LAYOUT ========= */
+  .wrap { max-width: 1280px; margin: 36px auto; padding: 0 20px; }
+  header { margin-bottom: 18px; }
+  h1 {
+    font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem); margin: 0 0 8px;
+    background: linear-gradient(90deg, #e8ecf3, #c9d7ff 40%, #9fe1ff 70%, #e8ecf3);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing: .3px;
+  }
+  .sub { color: var(--muted); font-size: .98rem; }
 
-    /* Disabled (optional) */
-    .btn:disabled,
-    .btn-ghost:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; padding: 16px; margin-top: 16px;
-    }
-    .img-wrap { text-align: center; }
-    .img-wrap img { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); }
-    .row {
-      display: grid; gap: 16px;
-      grid-template-columns: 1fr;
-    }
-    .errors {
-      list-style: none; margin: 0 0 12px; padding: 10px 12px;
-      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    }
-    .errors li { margin: 2px 0; }
-    .errors li.error   { color: #fca5a5; }   /* if you flash(..., "error") */
-    .errors li.success { color: #86efac; }   /* if you flash(..., "success") */
-    @media (min-width: 880px) {
-      .row {grid-template-columns: 2.2fr 0.8fr;}
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.95rem;
-    }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      padding: 10px 8px; text-align: left;
-    }
-    th { color: var(--muted); font-weight: 600; }
-    .meta { display: flex; gap: 16px; color: var(--muted); font-size: 0.92rem; }
-    .note { color: var(--muted); font-size: 0.9rem; margin-top: 8px; }
-    .success { color: #86efac; }   /* green-300 */
-    .danger { color: #fca5a5; }    /* red-300 */
-    .link { color: #93c5fd; text-decoration: none; }
-    .link:hover { text-decoration: underline; }
-  </style>
+  /* ========= GLASS PANELS ========= */
+  .panel, .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    backdrop-filter: blur(9px) saturate(120%);
+  }
+  .panel { padding: 20px; }
+
+  /* ========= FLASHES ========= */
+  .errors {
+    list-style: none; margin: 0 0 14px; padding: 10px 12px;
+    background: linear-gradient(180deg, rgba(24,31,52,.9), rgba(24,31,52,.75));
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .errors li { margin: 3px 0; }
+  .errors .error { color: #fca5a5; }
+  .errors .success { color: #86efac; }
+
+  /* ========= FORM ========= */
+  form {
+    display: grid; gap: 14px; align-items: end;
+    grid-template-columns: repeat(12, 1fr);
+  }
+  .field { display: grid; gap: 6px; }
+  label { font-size: .92rem; color: var(--muted); }
+
+  /* Inputs (stay dark-themed) */
+  input[type="text"] {
+    background: linear-gradient(180deg, rgba(31,41,67,.85), rgba(28,37,61,.7));
+    color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; min-height: 46px; outline: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease;
+  }
+  input[type="text"]:focus {
+    border-color: rgba(34,211,238,.7);
+    box-shadow: 0 0 0 3px rgba(34,211,238,.15);
+  }
+  input[type="text"]:active { transform: translateY(1px); }
+  input::placeholder { color: #64748b; }
+
+  /* ======= SELECTS (black font on light box as requested) ======= */
+  select {
+    color: #000;                                   /* black font */
+    background: #f3f4f6 !important;                /* light gray background */
+    border: 1px solid #cbd5e1;                     /* light border */
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-height: 46px;
+    outline: none;
+    transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease;
+  }
+  select:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(34,211,238,.22);
+  }
+  select:active { transform: translateY(1px); }
+  /* Dropdown menu items */
+  select option,
+  select optgroup {
+    color: #000;
+    background: #ffffff;
+  }
+
+  .field--ticker   { grid-column: span 5; }
+  .field--duration { grid-column: span 3; }
+  .field--sma      { grid-column: span 2; }
+  .actions         { grid-column: span 2; display: flex; gap: 10px; }
+
+  @media (max-width: 980px) {
+    .field--ticker   { grid-column: span 12; }
+    .field--duration { grid-column: span 6; }
+    .field--sma      { grid-column: span 6; }
+    .actions         { grid-column: span 12; }
+  }
+
+  /* ========= BUTTONS (neon rings) ========= */
+  .btn, a.btn {
+    --glow: 0 0 0 rgba(24,208,122,0);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    text-decoration: none; cursor: pointer; user-select: none;
+    min-height: 46px; padding: 10px 16px; border-radius: 12px;
+    font-weight: 700; letter-spacing: .2px;
+    color: #031a11; background: linear-gradient(180deg, #20e191, #13c174);
+    border: 1px solid rgba(24,208,122,.7);
+    box-shadow: var(--glow), inset 0 6px 8px rgba(255,255,255,.06), inset 0 -6px 8px rgba(0,0,0,.15);
+    transition: transform .08s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .btn:hover, a.btn:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 10px 30px rgba(24,208,122,.28),
+      0 0 0 3px rgba(34,211,238,.12);
+    filter: saturate(1.1);
+  }
+  .btn:active, a.btn:active { transform: translateY(0); box-shadow: var(--shadow-2); }
+  .btn.sec, a.btn.sec {
+    color: #0e0531; background: linear-gradient(180deg, #a78bfa, #7c5cf8);
+    border-color: rgba(139,92,246,.65);
+  }
+
+  /* ========= RESULTS ========= */
+  .results { display: grid; gap: 22px; margin-top: 20px; }
+  .plot-row {
+    display: grid; gap: 18px;
+    grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr);
+    align-items: start;
+  }
+  @media (max-width: 1180px) {
+    .plot-row { grid-template-columns: 1fr; }
+  }
+
+  .plot-card { padding: 0; overflow: hidden; }
+  .plot-head {
+    padding: 16px 18px 8px; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .badge {
+    padding: 6px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700;
+    color: #001a14; background: linear-gradient(180deg, #67e8f9, #22d3ee);
+    border: 1px solid rgba(34,211,238,.55);
+  }
+  .plot-body { padding: 6px 12px 14px; }
+  .plot-card .js-plotly-plot, .plot-card .plotly-graph-div { width: 100% !important; height: auto !important; }
+
+  .dl-wrap { display: flex; gap: 12px; padding: 0 18px 18px; flex-wrap: wrap; }
+  .card { padding: 16px; border-radius: var(--radius-lg); }
+
+  /* ========= FANCY SUMMARY (glass table) ========= */
+  .summary-card h4 { margin: 0 0 8px; font-size: 1.06rem; letter-spacing: .3px; }
+  .summary-card table {
+    width: 100%; border-collapse: collapse; font-size: .96rem;
+    background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+    border-radius: 14px; overflow: hidden;
+  }
+  .summary-card tr + tr td { border-top: 1px dashed rgba(255,255,255,.08); }
+  .summary-card td { padding: 10px 8px; text-align: left; }
+  .summary-card td:first-child { color: var(--muted); width: 58%; }
+  .pill {
+    display: inline-block; padding: 4px 8px; border-radius: 999px; font-weight: 700; font-size: .86rem;
+    background: linear-gradient(180deg, rgba(34,211,238,.16), rgba(34,211,238,.06));
+    border: 1px solid rgba(34,211,238,.25); color: #c6f9ff;
+  }
+
+  /* CSS-only accordion for extra notes under each ticker */
+  details {
+    margin-top: 10px; background: rgba(255,255,255,.02); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  details[open] { background: rgba(255,255,255,.04); border-color: rgba(34,211,238,.35); }
+  summary {
+    list-style: none; cursor: pointer; color: var(--muted); font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: "▸"; transform: translateY(1px); transition: transform .2s ease;
+    color: #7bd0ff;
+  }
+  details[open] summary::before { transform: rotate(90deg) translateX(1px); }
+
+  .note { color: var(--muted); font-size: .93rem; margin-top: 8px; }
+  .danger { color: #fca5a5; }
+
+  /* Subtle border glow on hover for cards */
+  .card:hover { border-color: rgba(34,211,238,.32); }
+</style>
 </head>
+
 <body>
+  <div class="backdrop" aria-hidden="true"></div>
+
   <div class="wrap">
     <header>
       <h1>Stock Market Analysis</h1>
-      <div class="sub">Enter a ticker, duration, and SMA to generate a chart and summary.</div>
+      <div class="sub">Enter a ticker, duration, and SMA to generate a chart and a glassy summary.</div>
     </header>
 
     <section class="panel">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <ul class="errors">
+          <ul class="errors" aria-live="polite">
             {% for category, msg in messages %}
               <li class="{{ category }}">{{ msg }}</li>
             {% endfor %}
           </ul>
         {% endif %}
       {% endwith %}
-      
+
       <form action="/" method="POST" novalidate>
-        <!-- Ticker (auto-uppercased in UI) -->
-        <div class="field">
+        <div class="field field--ticker">
           <label for="ticker">Ticker</label>
           <input type="text" id="ticker" name="ticker" placeholder="AAPL" value="{{ ticker or '' }}" style="text-transform: uppercase;" />
         </div>
 
-        <!-- Duration dropdown -->
-        <div class="field">
+        <div class="field field--duration">
           <label for="duration">Duration</label>
           <select id="duration" name="duration">
             {% set durations = ['1mo','3mo','6mo','1y','2y','3y'] %}
@@ -168,8 +280,7 @@
           </select>
         </div>
 
-        <!-- SMA dropdown -->
-        <div class="field">
+        <div class="field field--sma">
           <label for="sma">SMA Period</label>
           <select id="sma" name="sma">
             {% set sma_opts = [5,10,20,50,100,200] %}
@@ -182,87 +293,81 @@
         <div class="actions">
           <button class="btn" type="submit">Run Analysis</button>
           {% if analysis_key %}
-            <a id="csvBtn" class="btn" href="{{ url_for('download_csv', key=analysis_key) }}">
-              Download CSV
-            </a>
+            <a class="btn sec" href="{{ url_for('download_all_zip', key=analysis_key) }}">Download All (ZIP)</a>
           {% endif %}
-        </div> 
-        
+        </div>
       </form>
+
       {% if note %}
         <div class="note">{{ note }}</div>
       {% endif %}
     </section>
 
-    <div class="row">
-      <!-- Chart -->
-      <section class="card img-wrap">
-          {% if plot_html %}
-            <div>{{ plot_html | safe }}</div> 
-          {% else %}
-            <div class="note">Submit the form to render a chart.</div>
-          {% endif %}
-      </section>
+    <section class="results">
+      {% if plots %}
+        {% for p in plots %}
+        {% set i = loop.index0 %}
+        <div class="plot-row">
+          <!-- Chart -->
+          <section class="card plot-card">
+            <div class="plot-head">
+              <div>📈 Ticker: <strong style="color:#fff">{{ p.ticker }}</strong></div>
+              <span class="badge">Interactive</span>
+            </div>
+            <div class="plot-body">
+              {{ p.plot | safe }}
+            </div>
+            <div class="dl-wrap">
+              <a class="btn" href="{{ url_for('download_csv', key=analysis_key, ticker=p.ticker) }}">Download {{ p.ticker }} CSV</a>
+            </div>
 
-      <!-- Summary table -->
-      <section class="card">
-        <h3 style="margin: 0 0 6px;">Summary</h3>
-        <div class="meta">
-          <div>Ticker: <strong>{{ ticker or '—' }}</strong></div>
-          <div>Duration: <strong>{{ duration or '—' }}</strong></div>
-          <div>SMA: <strong>{{ sma or '—' }}</strong></div>
+            <div style="padding: 0 18px 18px;">
+              <details>
+                <summary>Notes & definitions</summary>
+                <div class="note" style="margin-top:8px">
+                  Longest run = consecutive trading days moving up or down. Max Profit is computed by your backend function and shown here without modification.
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <!-- Summary -->
+          <aside class="card summary-card">
+            {% if summaries and summaries|length > i %}
+              {% set s = summaries[i] %}
+              <h4>Summary</h4>
+              <table>
+                <tbody>
+                  <tr><td>Longest Up Run</td><td><span class="pill">{{ s.longest_up_streak }}</span></td></tr>
+                  <tr><td>Longest Down Run</td><td><span class="pill">{{ s.longest_down_streak }}</span></td></tr>
+                  <tr><td># Up Days</td><td><span class="pill">{{ s.up_count }}</span></td></tr>
+                  <tr><td># Down Days</td><td><span class="pill">{{ s.down_count }}</span></td></tr>
+                  <tr><td># Up Runs</td><td><span class="pill">{{ s.up_run_count }}</span></td></tr>
+                  <tr><td># Down Runs</td><td><span class="pill">{{ s.down_run_count }}</span></td></tr>
+                  <tr><td>Max Profit (USD)</td><td><span class="pill">{{ s.max_profit }}</span></td></tr>
+                  <tr><td>Avg Daily Return (%)</td><td><span class="pill">{{ s.avg_daily_return }}%</span></td></tr>
+                </tbody>
+              </table>
+              <details style="margin-top:12px">
+                <summary>Methodology</summary>
+                <div class="note" style="margin-top:8px">
+                  Values derive from your analysis pipeline for the selected duration and SMA window.
+                </div>
+              </details>
+            {% else %}
+              <div class="note">Summary not available.</div>
+            {% endif %}
+          </aside>
         </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Longest Up Run</td><td>{{longest_up_streak or '—' }}</td></tr>
-            <tr><td>Longest Down Run</td><td>{{longest_down_streak or '—' }}</td></tr>
-            <tr><td>Number of up days</td><td>{{up_count or '—' }}</td></tr>
-            <tr><td>Number of down days</td><td>{{down_count or '—' }}</td></tr>
-            <tr><td>Number of up runs</td><td>{{up_run_count or '—' }}</td></tr>
-            <tr><td>Number of down runs</td><td>{{down_run_count or '—' }}</td></tr>
-            <tr><td>Max Profit (USD)</td><td>{{max_profit or '—' }}</td></tr>
-            <tr><td>Avg Daily Return (%)</td><td>{{daily_return_avg_pct or '—' }}%</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
+        {% endfor %}
+      {% else %}
+        <div class="note">Submit the form to render a chart.</div>
+      {% endif %}
+    </section>
 
     {% if error %}
       <p class="danger">{{ error }}</p>
     {% endif %}
   </div>
-
-  <script>
-    (function () {
-      const btn = document.getElementById('csvBtn');
-      if (!btn) return;
-
-      btn.addEventListener('click', () => {
-        // Ensure we have a message box
-        let box = document.querySelector('.panel .errors');
-        if (!box) {
-          box = document.createElement('ul');
-          box.className = 'errors';
-          document.querySelector('.panel').prepend(box);
-        }
-
-        // Remove any prior success messages so this one stands alone
-        box.querySelectorAll('li.success').forEach(el => el.remove());
-
-        // Add fresh success line
-        const li = document.createElement('li');
-        li.className = 'success';
-        li.textContent = 'CSV download started.';
-        box.appendChild(li);
-      });
-    })();
-  </script>
 </body>
 </html>
